@@ -65,11 +65,14 @@ def video_processor():
             base_file_path = flv_file_path.rpartition('.')[0]
             ass_file_path = base_file_path + ".ass"
             m4v_file_path = base_file_path + ".m4v"
+            png_file_path = base_file_path + ".png"
             video_log_path = base_file_path + ".video.log"
 
-            ffmpeg_command = f"ffmpeg -i \"{flv_file_path}\" -vf \"ass={ass_file_path}\" \"{m4v_file_path}\"" \
-                             f" >> \"{video_log_path}\" 2>&1"
-            if os.system(ffmpeg_command) == 0:
+            ffmpeg_command = f"ffmpeg -i \"{flv_file_path}\" -vf \"ass={ass_file_path}\" -c:v h264_nvenc" \
+                             f" \"{m4v_file_path}\" >> \"{video_log_path}\" 2>&1"
+            ffmpeg_command_img = f"ffmpeg -i \"{flv_file_path}\" -ss 00:10:00 -vframes 1 \"{png_file_path}\"" \
+                                 f" >> \"{video_log_path}\" 2>&1"
+            if os.system(ffmpeg_command) == 0 and os.system(ffmpeg_command_img) == 0:
                 print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: Processing completed")
             else:
                 raise Exception("Video process error")

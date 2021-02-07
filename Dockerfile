@@ -2,7 +2,7 @@
 #
 # VERSION               0.0.1
 
-FROM ubuntu:20.04
+FROM nvidia/cuda:11.0-devel-ubuntu20.04
 
 ENV TZ=Asia/Shanghai
 ARG DEBIAN_FRONTEND=noninteractive
