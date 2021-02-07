@@ -57,4 +57,6 @@ WORKDIR "/"
 RUN apt-get update && apt-get install -y dotnet-sdk-3.1 ffmpeg fonts-noto-color-emoji fonts-noto-cjk-extra
 COPY run.sh .
 
+RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
+
 CMD /run.sh
