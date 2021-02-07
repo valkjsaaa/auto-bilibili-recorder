@@ -7,7 +7,7 @@ import threading
 
 import socket
 
-from queue import Queue, Empty
+from queue import Queue
 
 os.chdir("/storage")
 
@@ -24,6 +24,7 @@ app = Flask(__name__)
 
 danmaku_request_queue = Queue()
 video_request_queue = Queue()
+
 
 def danmaku_processor():
     while True:

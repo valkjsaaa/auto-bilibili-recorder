@@ -1,6 +1,6 @@
 # Auto bilibili live recording server
 #
-# VERSION               0.1
+# VERSION               0.0.1
 
 FROM ubuntu:20.04
 
