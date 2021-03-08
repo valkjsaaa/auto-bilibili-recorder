@@ -24,6 +24,7 @@ app = Flask(__name__)
 
 danmaku_request_queue = Queue()
 video_request_queue = Queue()
+extras_request_queue = Queue()
 
 
 def danmaku_processor():
@@ -91,17 +92,59 @@ def video_processor():
             print(f"Video queue length: {danmaku_request_queue.qsize()}")
 
 
+def extras_processor():
+    while True:
+        request_json = danmaku_request_queue.get()
+        try:
+            flv_file_path = request_json['RelativePath']
+            base_file_path = flv_file_path.rpartition('.')[0]
+            xml_file_path = base_file_path + ".xml"
+            graph_file_path = base_file_path + ".he.pdf"
+            he_file_path = base_file_path + ".he.txt"
+            sc_file_path = base_file_path + ".sc.txt"
+            extras_log_path = base_file_path + ".extras.log"
+
+            danmaku_extras_command = \
+                f"python3 /DanmakuProcess/danmaku-energy-map.py " \
+                f"--graph \"{graph_file_path}\" " \
+                f"--he_map \"{he_file_path}\" " \
+                f"--sc_list \"{sc_file_path}\" " \
+                f"\"{xml_file_path}\" " \
+                f">> \"{extras_log_path}\" 2>&1"
+            print(danmaku_extras_command)
+
+            if os.system(danmaku_extras_command) == 0:
+                pass
+            else:
+                raise Exception("Danmaku process error")
+            if (not os.path.isfile(graph_file_path)) \
+                    or (not os.path.isfile(he_file_path)) \
+                    or (not os.path.isfile(sc_file_path)):
+                raise Exception("Danmaku extras cannot be found")
+        except Exception as err:
+            # noinspection PyBroadException
+            try:
+                print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: {err}", file=sys.stderr)
+            except Exception:
+                print(f"Unknown danmaku extras exception")
+        finally:
+            print(f"Danmaku extras queue length: {danmaku_request_queue.qsize()}")
+
+
 danmaku_thread = threading.Thread(target=danmaku_processor)
 video_thread = threading.Thread(target=video_processor)
+extras_thread = threading.Thread(target=extras_processor)
 
 danmaku_thread.start()
 video_thread.start()
+extras_thread.start()
 
 
 @app.route('/process_video', methods=['POST'])
 def respond():
     print(request.json)
     danmaku_request_queue.put(request.json)
+    extras_request_queue.put(request.json)
     print(f"Danmaku queue length: {danmaku_request_queue.qsize()}")
     if danmaku_thread.is_alive() and video_thread.is_alive():
         return Response(status=200)
