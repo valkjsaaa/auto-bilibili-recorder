@@ -23,6 +23,7 @@ RUN git clone https://github.com/valkjsaaa/BililiveRecorder.git
 
 WORKDIR "/BililiveRecorder"
 
+RUN git checkout f0192a16a7b92df652eec40ec2fbd9485f2d9b5c
 RUN dotnet build -c Release; exit 0
 
 #ENTRYPOINT BililiveRecorder/BililiveRecorder.Cli/bin/Release/netcoreapp3.1/BililiveRecorder.Cli
@@ -35,8 +36,7 @@ RUN git clone https://github.com/valkjsaaa/DanmakuFactory.git
 
 WORKDIR "/DanmakuFactory"
 
-RUN git checkout linux
-
+RUN git checkout 8d376672da6346dd9da91738d9b6232d5d9a37cf
 RUN mkdir temp
 
 RUN make -f makefile_64
@@ -61,6 +61,7 @@ RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/lib
 
 WORKDIR "/DanmakuProcess"
 RUN git clone https://github.com/valkjsaaa/bilibili-danmaku-energy-map.git ./
+RUN git checkout 4d604ebe43b1c2ca8dc321f901e6ca919d0c7b9a
 RUN pip3 install -r requirements.txt
 
 CMD /run.sh
