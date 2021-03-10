@@ -8,6 +8,7 @@ import threading
 import socket
 
 from queue import Queue
+from gpuinfo import GPUInfo
 
 os.chdir("/storage")
 
@@ -42,12 +43,12 @@ def danmaku_processor():
                 f"--fontname \"Noto Sans CJK\" -S 50 " \
                 f">> \"{danmaku_log_path}\" 2>&1"
             print(danmaku_conversion_command, file=sys.stderr)
-            if os.system(danmaku_conversion_command) == 0:
-                extras_request_queue.put(request_json)
-            else:
-                raise Exception("Danmaku process error")
+            if os.system(danmaku_conversion_command) != 0:
+                print("Danmaku process error", file=sys.stderr)
             if not os.path.isfile(ass_file_path):
                 raise Exception("Danmaku file cannot be found")
+            else:
+                extras_request_queue.put(request_json)
         except Exception as err:
             # noinspection PyBroadException
             try:
@@ -56,6 +57,7 @@ def danmaku_processor():
                 print(f"Unknown danmaku exception", file=sys.stderr)
         finally:
             print(f"Danmaku queue length: {danmaku_request_queue.qsize()}", file=sys.stderr)
+            sys.stderr.flush()
 
 
 def video_processor():
@@ -63,10 +65,21 @@ def video_processor():
         request_json = video_request_queue.get()
         try:
             flv_file_path = request_json['RelativePath']
+            he_time = request_json['he_time']
             base_file_path = flv_file_path.rpartition('.')[0]
-            ass_file_path = base_file_path + ".ass"
+            video_file_path = base_file_path + ".bar.mp4"
             png_file_path = base_file_path + ".png"
             video_log_path = base_file_path + ".video.log"
+
+            ffmpeg_command_img = f"ffmpeg -ss {he_time} -i \"{flv_file_path}\" -vframes 1 \"{png_file_path}\"" \
+                                 f" >> \"{video_log_path}\" 2>&1"
+            print(ffmpeg_command_img, file=sys.stderr)
+            return_value = os.system(ffmpeg_command_img)
+            return_text = "Processing completed" if return_value == 0 else "Processing error"
+            print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: image {return_text}",
+                  file=sys.stderr)
+            if not os.path.isfile(png_file_path):
+                raise Exception("Video preview file cannot be found")
             ffmpeg_command = f'FILE=\"{base_file_path}\" ' + ''' \
 && TIME=`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${FILE}.flv"`\
 && ffmpeg -loop 1 -t ${TIME} \
@@ -88,17 +101,17 @@ color=black:d=${TIME}[black];
 [ref2][color_crop]overlay=y=main_h-overlay_h[out_color];
 [out_color][gray_crop]overlay=y=main_h-overlay_h[out];
 [out]ass='${FILE}.ass'[out_sub]" \
--map "[out_sub]" -map 1:a -c:v h264_nvenc -b:v 4500K -b:a 320K -ar 44100 -preset slow  "${FILE}.bar.mp4" \
+-map "[out_sub]" -map 1:a ''' + \
+                             (" -c:v h264_nvenc -preset slow "
+                              if GPUInfo.check_empty() is not None else " -c:v libx264 -preset medium ") + \
+                             '''-b:v 4500K -b:a 320K -ar 44100  "${FILE}.bar.mp4" \
             ''' + f'>> "{video_log_path}" 2>&1'
-            ffmpeg_command_img = f"ffmpeg -i \"{flv_file_path}\" -ss 00:10:00 -vframes 1 \"{png_file_path}\"" \
-                                 f" >> \"{video_log_path}\" 2>&1"
             print(ffmpeg_command, file=sys.stderr)
-            print(ffmpeg_command_img, file=sys.stderr)
-            if os.system(ffmpeg_command) == 0 and os.system(ffmpeg_command_img) == 0:
-                print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: Processing completed", file=sys.stderr)
-            else:
-                raise Exception("Video process error")
-            if not os.path.isfile(ass_file_path):
+            return_value = os.system(ffmpeg_command)
+            return_text = "Processing completed" if return_value == 0 else "Processing error"
+            print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: video {return_text}",
+                  file=sys.stderr)
+            if not os.path.isfile(video_file_path):
                 raise Exception("Video file cannot be found")
         except Exception as err:
             # noinspection PyBroadException
@@ -108,6 +121,7 @@ color=black:d=${TIME}[black];
                 print(f"Unknown video exception", file=sys.stderr)
         finally:
             print(f"Video queue length: {danmaku_request_queue.qsize()}", file=sys.stderr)
+            sys.stderr.flush()
 
 
 def extras_processor():
@@ -120,6 +134,7 @@ def extras_processor():
             graph_file_path = base_file_path + ".he.png"
             he_file_path = base_file_path + ".he.txt"
             sc_file_path = base_file_path + ".sc.txt"
+            he_pos_file_path = base_file_path + ".he_pos.txt"
             extras_log_path = base_file_path + ".extras.log"
 
             danmaku_extras_command = \
@@ -127,6 +142,7 @@ def extras_processor():
                 f"--graph \"{graph_file_path}\" " \
                 f"--he_map \"{he_file_path}\" " \
                 f"--sc_list \"{sc_file_path}\" " \
+                f"--he_time \"{he_pos_file_path}\" " \
                 f"\"{xml_file_path}\" " \
                 f">> \"{extras_log_path}\" 2>&1"
             print(danmaku_extras_command, file=sys.stderr)
@@ -137,9 +153,13 @@ def extras_processor():
                 raise Exception("Danmaku process error")
             if (not os.path.isfile(graph_file_path)) \
                     or (not os.path.isfile(he_file_path)) \
-                    or (not os.path.isfile(sc_file_path)):
+                    or (not os.path.isfile(sc_file_path)) \
+                    or (not os.path.isfile(he_pos_file_path)):
                 raise Exception("Danmaku extras cannot be found")
             else:
+                with open(he_pos_file_path, 'r') as file:
+                    he_time = file.readline()
+                request_json['he_time'] = he_time
                 video_request_queue.put(request_json)
         except Exception as err:
             # noinspection PyBroadException
@@ -149,6 +169,7 @@ def extras_processor():
                 print(f"Unknown danmaku extras exception", file=sys.stderr)
         finally:
             print(f"Danmaku extras queue length: {danmaku_request_queue.qsize()}", file=sys.stderr)
+            sys.stderr.flush()
 
 
 danmaku_thread = threading.Thread(target=danmaku_processor)

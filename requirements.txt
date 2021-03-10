@@ -1,3 +1,5 @@
 Flask==1.1.2
-bilibili_api==3.2.0
 PyYAML==5.4.1
+python-dateutil~=2.8.1
+gpuinfo~=1.0.0a7
+git+https://github.com/valkjsaaa/bilibili_api.git@ad18fa7c49f33bb82e07717e13df4bbe0cf1c987
