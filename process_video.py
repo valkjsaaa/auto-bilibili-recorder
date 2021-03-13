@@ -1,14 +1,16 @@
 #!/usr/bin/python3
 import os
+import socket
+import subprocess
 import sys
+import threading
+import traceback
+from queue import Queue
 
 from flask import Flask, request, Response
-import threading
-
-import socket
-
-from queue import Queue
 from gpuinfo import GPUInfo
+
+from upload_video import video_poster, comment_poster, video_posting_queue, load_comment_task_list
 
 os.chdir("/storage")
 
@@ -53,11 +55,20 @@ def danmaku_processor():
             # noinspection PyBroadException
             try:
                 print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: {err}", file=sys.stderr)
+                print(traceback.format_exc(), file=sys.stderr)
             except Exception:
                 print(f"Unknown danmaku exception", file=sys.stderr)
         finally:
             print(f"Danmaku queue length: {danmaku_request_queue.qsize()}", file=sys.stderr)
             sys.stderr.flush()
+
+
+def upload_no_danmaku_video(new_request: dict):
+    try:
+        video_posting_queue.put(new_request)
+        print(f"uploading no danmaku video: {new_request}", file=sys.stderr)
+    except Exception as err:
+        print(f"cannot uploading no danmaku video: {err}", file=sys.stderr)
 
 
 def video_processor():
@@ -70,6 +81,16 @@ def video_processor():
             video_file_path = base_file_path + ".bar.mp4"
             png_file_path = base_file_path + ".png"
             video_log_path = base_file_path + ".video.log"
+            total_seconds_str = subprocess.check_output(
+                f'ffprobe -v error -show_entries format=duration '
+                f'-of default=noprint_wrappers=1:nokey=1 "{flv_file_path}"', shell=True
+            )
+            total_seconds = float(total_seconds_str)
+            max_size = 8000_000 * 8  # Kb
+            audio_bitrate = 320
+            video_bitrate = (max_size / total_seconds - audio_bitrate) - 500  # just to be safe
+            max_video_bitrate = float(4500)
+            video_bitrate = int(min(max_video_bitrate, video_bitrate))
 
             ffmpeg_command_img = f"ffmpeg -ss {he_time} -i \"{flv_file_path}\" -vframes 1 \"{png_file_path}\"" \
                                  f" >> \"{video_log_path}\" 2>&1"
@@ -80,6 +101,9 @@ def video_processor():
                   file=sys.stderr)
             if not os.path.isfile(png_file_path):
                 raise Exception("Video preview file cannot be found")
+            else:
+                print("uploading quick video", file=sys.stderr)
+                upload_no_danmaku_video(request_json)
             ffmpeg_command = f'FILE=\"{base_file_path}\" ' + ''' \
 && TIME=`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${FILE}.flv"`\
 && ffmpeg -loop 1 -t ${TIME} \
@@ -104,7 +128,7 @@ color=black:d=${TIME}[black];
 -map "[out_sub]" -map 1:a ''' + \
                              (" -c:v h264_nvenc -preset slow "
                               if GPUInfo.check_empty() is not None else " -c:v libx264 -preset medium ") + \
-                             '''-b:v 4500K -b:a 320K -ar 44100  "${FILE}.bar.mp4" \
+                             f'-b:v {video_bitrate}K' + ''' -b:a 320K -ar 44100  "${FILE}.bar.mp4" \
             ''' + f'>> "{video_log_path}" 2>&1'
             print(ffmpeg_command, file=sys.stderr)
             return_value = os.system(ffmpeg_command)
@@ -117,6 +141,7 @@ color=black:d=${TIME}[black];
             # noinspection PyBroadException
             try:
                 print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: {err}", file=sys.stderr)
+                print(traceback.format_exc(), file=sys.stderr)
             except Exception:
                 print(f"Unknown video exception", file=sys.stderr)
         finally:
@@ -165,6 +190,7 @@ def extras_processor():
             # noinspection PyBroadException
             try:
                 print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: {err}", file=sys.stderr)
+                print(traceback.format_exc(), file=sys.stderr)
             except Exception:
                 print(f"Unknown danmaku extras exception", file=sys.stderr)
         finally:
@@ -182,11 +208,31 @@ extras_thread.start()
 
 
 @app.route('/process_video', methods=['POST'])
-def respond():
+def respond_process():
     print(request.json, file=sys.stderr)
     danmaku_request_queue.put(request.json)
     print(f"Danmaku queue length: {danmaku_request_queue.qsize()}", file=sys.stderr)
-    if danmaku_thread.is_alive() and video_thread.is_alive():
+    if danmaku_thread.is_alive() and video_thread.is_alive() and extras_thread.is_alive():
+        return Response(status=200)
+    else:
+        return Response(status=500)
+
+
+load_comment_task_list()
+
+video_upload_thread = threading.Thread(target=video_poster)
+comment_poster_thread = threading.Thread(target=comment_poster)
+
+video_upload_thread.start()
+comment_poster_thread.start()
+
+
+@app.route('/upload_video', methods=['POST'])
+def respond_upload():
+    print(request.json, file=sys.stderr)
+    video_posting_queue.put(request.json)
+    print(f"Comment queue length: {video_posting_queue.qsize()}", file=sys.stderr)
+    if video_upload_thread.is_alive() and comment_poster_thread.is_alive():
         return Response(status=200)
     else:
         return Response(status=500)

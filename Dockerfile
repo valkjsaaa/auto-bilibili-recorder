@@ -47,6 +47,8 @@ WORKDIR "/webhook"
 
 COPY process_video.py .
 
+COPY upload_video.py .
+
 COPY requirements.txt .
 
 RUN pip3 install -r requirements.txt
