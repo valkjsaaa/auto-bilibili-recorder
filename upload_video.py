@@ -93,16 +93,21 @@ def post_comments_on_vid(bv_number: str, comments: [str], verify: Verify):
     if len(comments) > 0:
         resp = send_comment(comments[0], bvid=bv_number, verify=verify)
         for i in range(1, len(comments)):
-            send_comment(comments[i], root=resp['rpid'])
+            send_comment(comments[i], root=resp['rpid'], verify=verify)
 
 
 def post_comment(bv_number: str, sc_comments: [str], he_comments: [str], config: {str: str}) -> bool:
     try:
         verify = Verify(sessdata=config["sessdata"], csrf=config["bili_jct"])
         _ = get_video_info(bvid=bv_number, verify=verify)
-        post_comments_on_vid(bv_number, sc_comments, verify)
-        post_comments_on_vid(bv_number, he_comments, verify)
-        return True
+        try:
+            post_comments_on_vid(bv_number, sc_comments, verify)
+            post_comments_on_vid(bv_number, he_comments, verify)
+        except bilibili_api.exceptions.BilibiliApiException:
+            print("comment posting error", file=sys.stderr)
+            print(traceback.format_exc(), file=sys.stderr)
+        finally:
+            return True
     except bilibili_api.exceptions.BilibiliApiException:
         return False
 
@@ -125,6 +130,9 @@ def video_poster():
     asyncio.set_event_loop(loop)
     while True:
         request_json = video_posting_queue.get()
+        if 'trial' not in request_json:
+            request_json['trial'] = 0
+        trial = request_json['trial']
         try:
             room_id = request_json['RoomId']
             room_name = request_json['Name']
@@ -158,7 +166,13 @@ def video_poster():
             post_comment_async(bvid, sc_list, he_list, config)
         except Exception as err:
             try:
+                request_json['trial'] = trial + 1
+                if trial < 5:
+                    video_posting_queue.put(request_json)
+                else:
+                    print(f"Too many trials for room {request_json['RoomId']} at {request_json['StartRecordTime']}")
                 print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: {err}", file=sys.stderr)
+                print(traceback.format_exc(), file=sys.stderr)
             except Exception:
                 print(f"Unknown video posting exception", file=sys.stderr)
                 print(traceback.format_exc(), file=sys.stderr)
@@ -193,8 +207,11 @@ def comment_poster():
 
 
 # if __name__ == '__main__':
+#     import threading
 #     load_comment_task_list("./example_dir/comment-task.yaml")
-#     video_posting_queue.put({'EventRandomId': '34d3af43-02ab-468a-abbb-b7cd5d653f47', 'RoomId': 16405, 'Name': '★⑥檤轮囬★', 'Title': '回来了', 'RelativePath': '/Users/jackie/Downloads/bililive-docker/example_dir/16405-★⑥檤轮囬★/录制-16405-20210309-232932-回来了.flv', 'FileSize': 1590008206, 'StartRecordTime': '2021-03-09T23:29:32.2938893+08:00', 'EndRecordTime': '2021-03-10T02:44:40.889765+08:00'})
+#     with open('./example_dir/bilibili-config.yaml', 'r') as file:
+#         bilibili_config = yaml.load(file, Loader=yaml.FullLoader)
+#     # video_posting_queue.put({'EventRandomId': '34d3af43-02ab-468a-abbb-b7cd5d653f47', 'RoomId': 16405, 'Name': '★⑥檤轮囬★', 'Title': '回来了', 'RelativePath': '/Users/jackie/Downloads/bililive-docker/example_dir/16405-★⑥檤轮囬★/录制-16405-20210309-232932-回来了.flv', 'FileSize': 1590008206, 'StartRecordTime': '2021-03-09T23:29:32.2938893+08:00', 'EndRecordTime': '2021-03-10T02:44:40.889765+08:00'})
 #     video_upload_thread = threading.Thread(target=video_poster)
 #     comment_poster_thread = threading.Thread(target=comment_poster)
 #

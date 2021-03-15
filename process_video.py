@@ -92,6 +92,8 @@ def video_processor():
             max_video_bitrate = float(4500)
             video_bitrate = int(min(max_video_bitrate, video_bitrate))
 
+            he_time = int(min(float(he_time), total_seconds - 5))  # prevent preview image generation error
+
             ffmpeg_command_img = f"ffmpeg -ss {he_time} -i \"{flv_file_path}\" -vframes 1 \"{png_file_path}\"" \
                                  f" >> \"{video_log_path}\" 2>&1"
             print(ffmpeg_command_img, file=sys.stderr)
@@ -100,7 +102,7 @@ def video_processor():
             print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: image {return_text}",
                   file=sys.stderr)
             if not os.path.isfile(png_file_path):
-                raise Exception("Video preview file cannot be found")
+                print("Video preview file cannot be found", file=sys.stderr)
             else:
                 print("uploading quick video", file=sys.stderr)
                 upload_no_danmaku_video(request_json)
@@ -144,6 +146,7 @@ color=black:d=${TIME}[black];
                 print(traceback.format_exc(), file=sys.stderr)
             except Exception:
                 print(f"Unknown video exception", file=sys.stderr)
+                print(traceback.format_exc(), file=sys.stderr)
         finally:
             print(f"Video queue length: {danmaku_request_queue.qsize()}", file=sys.stderr)
             sys.stderr.flush()
@@ -193,6 +196,7 @@ def extras_processor():
                 print(traceback.format_exc(), file=sys.stderr)
             except Exception:
                 print(f"Unknown danmaku extras exception", file=sys.stderr)
+                print(traceback.format_exc(), file=sys.stderr)
         finally:
             print(f"Danmaku extras queue length: {danmaku_request_queue.qsize()}", file=sys.stderr)
             sys.stderr.flush()
