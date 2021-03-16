@@ -93,7 +93,7 @@ def post_comments_on_vid(bv_number: str, comments: [str], verify: Verify):
     if len(comments) > 0:
         resp = send_comment(comments[0], bvid=bv_number, verify=verify)
         for i in range(1, len(comments)):
-            send_comment(comments[i], root=resp['rpid'], verify=verify)
+            send_comment(comments[i], bvid=bv_number, root=resp['rpid'], verify=verify)
 
 
 def post_comment(bv_number: str, sc_comments: [str], he_comments: [str], config: {str: str}) -> bool:
