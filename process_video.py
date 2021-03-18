@@ -162,6 +162,7 @@ def extras_processor():
             graph_file_path = base_file_path + ".he.png"
             he_file_path = base_file_path + ".he.txt"
             sc_file_path = base_file_path + ".sc.txt"
+            sc_srt_path = base_file_path + ".sc.srt"
             he_pos_file_path = base_file_path + ".he_pos.txt"
             extras_log_path = base_file_path + ".extras.log"
 
@@ -171,6 +172,7 @@ def extras_processor():
                 f"--he_map \"{he_file_path}\" " \
                 f"--sc_list \"{sc_file_path}\" " \
                 f"--he_time \"{he_pos_file_path}\" " \
+                f"--sc_srt \"{sc_srt_path}\" " \
                 f"\"{xml_file_path}\" " \
                 f">> \"{extras_log_path}\" 2>&1"
             print(danmaku_extras_command, file=sys.stderr)
@@ -182,7 +184,8 @@ def extras_processor():
             if (not os.path.isfile(graph_file_path)) \
                     or (not os.path.isfile(he_file_path)) \
                     or (not os.path.isfile(sc_file_path)) \
-                    or (not os.path.isfile(he_pos_file_path)):
+                    or (not os.path.isfile(he_pos_file_path)) \
+                    or (not os.path.isfile(sc_srt_path)):
                 raise Exception("Danmaku extras cannot be found")
             else:
                 with open(he_pos_file_path, 'r') as file:
