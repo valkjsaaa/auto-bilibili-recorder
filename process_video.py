@@ -10,7 +10,8 @@ from queue import Queue
 from flask import Flask, request, Response
 from gpuinfo import GPUInfo
 
-from upload_video import video_poster, comment_poster, video_posting_queue, load_comment_task_list
+from upload_video import video_poster, comment_poster, video_posting_queue, load_comment_task_list, \
+    load_upload_task_dict
 
 os.chdir("/storage")
 
@@ -58,6 +59,7 @@ def danmaku_processor():
                 print(traceback.format_exc(), file=sys.stderr)
             except Exception:
                 print(f"Unknown danmaku exception", file=sys.stderr)
+                print(traceback.format_exc(), file=sys.stderr)
         finally:
             print(f"Danmaku queue length: {danmaku_request_queue.qsize()}", file=sys.stderr)
             sys.stderr.flush()
@@ -105,6 +107,7 @@ def video_processor():
                 print("Video preview file cannot be found", file=sys.stderr)
             else:
                 print("uploading quick video", file=sys.stderr)
+                request_json['is_update'] = False
                 upload_no_danmaku_video(request_json)
             ffmpeg_command = f'FILE=\"{base_file_path}\" ' + ''' \
 && TIME=`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${FILE}.flv"`\
@@ -138,7 +141,11 @@ color=black:d=${TIME}[black];
             print(f"Room {request_json['RoomId']} at {request_json['StartRecordTime']}: video {return_text}",
                   file=sys.stderr)
             if not os.path.isfile(video_file_path):
-                raise Exception("Video file cannot be found")
+                print("Video file cannot be found", file=sys.stderr)
+            else:
+                print("Updating full video", file=sys.stderr)
+                request_json['is_update'] = True
+                upload_no_danmaku_video(request_json)
         except Exception as err:
             # noinspection PyBroadException
             try:
@@ -226,6 +233,7 @@ def respond_process():
 
 
 load_comment_task_list()
+load_upload_task_dict()
 
 video_upload_thread = threading.Thread(target=video_poster)
 comment_poster_thread = threading.Thread(target=comment_poster)

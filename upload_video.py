@@ -11,13 +11,35 @@ import bilibili_api
 import dateutil.parser
 import yaml
 from bilibili_api import Verify
-from bilibili_api.video import video_upload, video_submit, video_cover_upload, get_video_info, send_comment
+from bilibili_api.video import video_upload, video_submit, video_cover_upload, get_video_info, send_comment, video_update
 
 with open('/storage/bilibili-config.yaml', 'r') as file:
     bilibili_config = yaml.load(file, Loader=yaml.FullLoader)
 
 
-def upload_video(image_path, video_path, date_string, uploader_name, title, config):
+upload_task_yaml_path = '/storage/upload-task.yaml'
+upload_task_dict: {str: str} = {}
+
+
+def load_upload_task_dict(yaml_path=None):
+    global upload_task_dict, upload_task_yaml_path
+    if yaml_path is not None:
+        upload_task_yaml_path = yaml_path
+    if os.path.isfile(upload_task_yaml_path):
+        try:
+            with open(upload_task_yaml_path, 'r') as file:
+                upload_task_dict = yaml.load(file, Loader=yaml.FullLoader)
+        except:
+            print("upload task list parse error", file=sys.stderr)
+            return
+
+
+def update_upload_task_dict():
+    with open(upload_task_yaml_path, 'w') as file:
+        yaml.dump(upload_task_dict, file, Dumper=yaml.Dumper)
+
+
+def upload_video(image_path, video_path, date_string, uploader_name, title, config, update_mode, task_id):
     verify = Verify(sessdata=config["sessdata"], csrf=config["bili_jct"])
     video_date = dateutil.parser.isoparse(date_string)
     video_name = f"【{uploader_name}】{video_date.strftime('%Y年%m月%d日')} {title} 无弹幕先行版"
@@ -28,34 +50,68 @@ def upload_video(image_path, video_path, date_string, uploader_name, title, conf
 
     filename = video_upload(video_path, verify=verify, on_progress=on_progress)
 
-    data = {
-        "copyright": 2,
-        "source": config["source"],
-        "cover": cover_url,
-        "desc": config["description"],
-        "desc_format_id": 0,
-        "dynamic": "",
-        "interactive": 0,
-        "no_reprint": 0,
-        "subtitles": {
-            "lan": "",
-            "open": 0
-        },
-        "tag": config["tags"],
-        "tid": config["channel_id"],
-        "title": video_name,
-        "videos": [
-            {
-                "desc": "",
-                "filename": filename,
-                "title": video_name
-            }
-        ]
-    }
+    if not update_mode:
+        data = {
+            "copyright": 2,
+            "source": config["source"],
+            "cover": cover_url,
+            "desc": config["description"],
+            "desc_format_id": 0,
+            "dynamic": "",
+            "interactive": 0,
+            "no_reprint": 0,
+            "subtitles": {
+                "lan": "",
+                "open": 0
+            },
+            "tag": config["tags"],
+            "tid": config["channel_id"],
+            "title": video_name,
+            "videos": [
+                {
+                    "desc": "",
+                    "filename": filename,
+                    "title": video_name
+                }
+            ]
+        }
 
-    result = video_submit(data, verify)
-    print(f"{video_name} uploaded: {result}", file=sys.stderr)
-    return result
+        result = video_submit(data, verify)
+        print(f"{video_name} uploaded: {result}", file=sys.stderr)
+        upload_task_dict[task_id] = result['bvid']
+        update_upload_task_dict()
+        return result
+    else:
+        v = get_video_info(bvid=upload_task_dict[task_id], is_simple=False, is_member=True, verify=verify)
+        print(f"updating... original_video: {v}", file=sys.stderr)
+        data = {
+            "copyright": v["archive"]['copyright'],
+            "source": v["archive"]["source"],
+            "cover": v["archive"]["cover"],
+            "desc": v["archive"]["desc"],
+            "desc_format_id": v["archive"]["desc_format_id"],
+            "dynamic": v["archive"]["dynamic"],
+            # "interactive": v["archive"]["interactive"],
+            # "no_reprint": v["archive"]["no_reprint"],
+            # "subtitle": v["subtitle"],
+            "tag": v["archive"]["tag"],
+            "tid": v["archive"]["tid"],
+            "title": v["archive"]["title"].replace("无弹幕先行版", "弹幕高能版"),
+            "videos":
+                [{
+                    "desc": video['desc'],
+                    "filename": filename if idx == 0 else video['filename'],
+                    "title": video['title']
+                } for idx, video in enumerate(v["videos"])]
+            ,
+            "handle_staff": False,
+            'bvid': v["archive"]["bvid"]
+        }
+
+        result = video_update(data, verify)
+        print(f"{data['title']} updated: {result}", file=sys.stderr)
+        return result
+
 
 
 comment_task_yaml_path = '/storage/comment-task.yaml'
@@ -134,6 +190,7 @@ def video_poster():
             request_json['trial'] = 0
         trial = request_json['trial']
         try:
+            update_mode = request_json['is_update']
             room_id = request_json['RoomId']
             room_name = request_json['Name']
             room_title = request_json['Title']
@@ -145,25 +202,29 @@ def video_poster():
             record_time = request_json['StartRecordTime']
             base_file_path = flv_file_path.rpartition('.')[0]
             video_file_path = base_file_path + ".flv"
+            update_video_file_path = base_file_path + ".bar.mp4"
             png_file_path = base_file_path + ".png"
             resp = upload_video(
                 image_path=png_file_path,
-                video_path=video_file_path,
+                video_path=update_video_file_path if update_mode else video_file_path,
                 date_string=record_time,
                 uploader_name=room_name,
                 title=room_title,
-                config=config
+                config=config,
+                update_mode=update_mode,
+                task_id=request_json['EventRandomId']
             )
-            bvid = resp['bvid']
-            he_file_path = base_file_path + ".he.txt"
-            sc_file_path = base_file_path + ".sc.txt"
-            with open(he_file_path, 'r') as file:
-                he_str = file.read()
-            with open(sc_file_path, 'r') as file:
-                sc_str = file.read()
-            he_list = he_str.split(SEG_CHAR)
-            sc_list = sc_str.split(SEG_CHAR)
-            post_comment_async(bvid, sc_list, he_list, config)
+            if not update_mode:
+                bvid = resp['bvid']
+                he_file_path = base_file_path + ".he.txt"
+                sc_file_path = base_file_path + ".sc.txt"
+                with open(he_file_path, 'r') as file:
+                    he_str = file.read()
+                with open(sc_file_path, 'r') as file:
+                    sc_str = file.read()
+                he_list = he_str.split(SEG_CHAR)
+                sc_list = sc_str.split(SEG_CHAR)
+                post_comment_async(bvid, sc_list, he_list, config)
         except Exception as err:
             try:
                 request_json['trial'] = trial + 1
