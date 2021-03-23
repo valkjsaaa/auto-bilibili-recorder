@@ -42,7 +42,12 @@ def update_upload_task_dict():
 def upload_video(image_path, video_path, date_string, uploader_name, title, config, update_mode, task_id):
     verify = Verify(sessdata=config["sessdata"], csrf=config["bili_jct"])
     video_date = dateutil.parser.isoparse(date_string)
+    history_names = [video_name for task_id, (bvid, video_name) in upload_task_dict.items()]
     video_name = f"【{uploader_name}】{video_date.strftime('%Y年%m月%d日')} {title} 无弹幕先行版"
+    i = 1
+    while video_name in history_names:
+        i += 1
+        video_name = f"【{uploader_name}】{video_date.strftime('%Y年%m月%d日')} {title}{i} 无弹幕先行版"
     cover_url = video_cover_upload(image_path, verify=verify)
 
     def on_progress(update):
@@ -55,7 +60,7 @@ def upload_video(image_path, video_path, date_string, uploader_name, title, conf
             "copyright": 2,
             "source": config["source"],
             "cover": cover_url,
-            "desc": config["description"],
+            "desc": config["description"] + f"\nhttps://tsxk.jya.ng/{video_path}",
             "desc_format_id": 0,
             "dynamic": "",
             "interactive": 0,
@@ -78,7 +83,7 @@ def upload_video(image_path, video_path, date_string, uploader_name, title, conf
 
         result = video_submit(data, verify)
         print(f"{video_name} uploaded: {result}", file=sys.stderr)
-        upload_task_dict[task_id] = result['bvid']
+        upload_task_dict[task_id] = (result['bvid'], video_name)
         update_upload_task_dict()
         return result
     else:
