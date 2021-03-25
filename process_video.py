@@ -43,7 +43,7 @@ def danmaku_processor():
 
             danmaku_conversion_command = \
                 f"/DanmakuFactory/DanmakuFactory -o \"{ass_file_path}\" -i \"{xml_file_path}\" " \
-                f"--fontname \"Noto Sans CJK\" -S 50 " \
+                f"--fontname \"Noto Sans CJK SC\" -S 50 " \
                 f">> \"{danmaku_log_path}\" 2>&1"
             print(danmaku_conversion_command, file=sys.stderr)
             if os.system(danmaku_conversion_command) != 0:

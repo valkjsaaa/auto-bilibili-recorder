@@ -63,7 +63,7 @@ RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/lib
 
 WORKDIR "/DanmakuProcess"
 RUN git clone https://github.com/valkjsaaa/bilibili-danmaku-energy-map.git ./
-RUN git checkout 7b92ddd510877535e99e03ebf741f89304cca71a
+RUN git checkout 47b5f71ae770e9038be55ef823f313f6dab0b3b4
 RUN pip3 install -r requirements.txt
 
 CMD /run.sh
