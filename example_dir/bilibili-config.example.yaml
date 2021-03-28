@@ -1,0 +1,8 @@
+- sessdata: "sessdata"
+  bili_jct: "bili_jct"
+  description: >-
+    录播源文件 https://tsxk.jya.ng/
+    由自动录播脚本上传
+  tags: "生活,日常,录播,直播录屏,熊卡,碳酸熊卡"
+  channel_id: 21
+  upload_room_list: [128308]
