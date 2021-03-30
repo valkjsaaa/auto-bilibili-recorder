@@ -39,12 +39,27 @@ ${录制目标文件夹}
 使用 docker 运行脚本：
 
 1. 安装 docker （已经安装的跳过这一步）：https://docs.docker.com/get-docker/
-2. 运行 docker 镜像：
-
-   有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:2.4b`
+   如果想使用 GPU 加速的话，还需要[安装 NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#setting-up-nvidia-container-toolkit)
+   例如，如果是 Ubuntu/Debian 的话，需要：
+   ```bash
+   distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
+   && curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add - \
+   && curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+   
+   curl -s -L https://nvidia.github.io/nvidia-container-runtime/experimental/$distribution/nvidia-container-runtime.list | sudo tee /etc/apt/sources.list.d/nvidia-container-runtime.list
+   
+   sudo apt-get update
+   
+   sudo apt-get install -y nvidia-docker2
+   
+   sudo systemctl restart docker
+   ```
+3. 运行 docker 镜像：
 
    无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:2.4b`
 3. 停止录播：
+
+   有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:2.4b`
 
    `sudo docker rm -f auto-bilibili-recorder`
 
