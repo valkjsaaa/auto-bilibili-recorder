@@ -3,3 +3,4 @@ PyYAML==5.4.1
 python-dateutil~=2.8.1
 gpuinfo~=1.0.0a7
 git+https://github.com/valkjsaaa/bilibili_api.git@75a4534465a2610f3a8e561124c8c4c393fc0e3
+Quart~=0.14.1

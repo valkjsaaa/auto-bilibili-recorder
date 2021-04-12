@@ -1,0 +1,16 @@
+accounts:
+  test_bot:
+    name: 测试录播bot
+    sessdata: "sessdata"
+    bili_jct: "bili_jct"
+rooms:
+  - id: 128308  # upload this room
+    uploader: test_bot
+    tags: "生活,日常,录播,直播录屏,熊卡,碳酸熊卡"
+    channel_id: 21
+    title: 【$name】$yy年$mm月$dd日 $title
+    source: "https://live.bilibili.com/261"
+    description: >-
+      由 $uploader_name 录播脚本上传
+      录播源文件 https://tsxk.jya.ng/$flv_path
+  - id: 16405  # don't upload this room

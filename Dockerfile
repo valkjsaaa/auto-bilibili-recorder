@@ -14,7 +14,7 @@ RUN dpkg -i packages-microsoft-prod.deb
 
 RUN add-apt-repository universe
 
-RUN apt-get update && apt-get install -y dotnet-sdk-3.1 powershell
+RUN apt-get update && apt-get install -y dotnet-sdk-5.0 powershell
 
 
 RUN ln -s /usr/bin/pwsh /usr/bin/powershell
@@ -23,8 +23,8 @@ RUN git clone https://github.com/valkjsaaa/BililiveRecorder.git
 
 WORKDIR "/BililiveRecorder"
 
-RUN git checkout f0192a16a7b92df652eec40ec2fbd9485f2d9b5c
-RUN dotnet build -c Release; exit 0
+RUN git checkout cf3072a887d06494afcd0a0337d2103408e2a9f7
+RUN dotnet build BililiveRecorder.Cli/BililiveRecorder.Cli.csproj -c Release
 
 #ENTRYPOINT BililiveRecorder/BililiveRecorder.Cli/bin/Release/netcoreapp3.1/BililiveRecorder.Cli
 
@@ -45,9 +45,7 @@ RUN apt-get update && apt-get install -y python3 python3-pip
 
 WORKDIR "/webhook"
 
-COPY process_video.py .
-
-COPY upload_video.py .
+COPY *.py .
 
 COPY requirements.txt .
 
@@ -57,13 +55,13 @@ RUN pip3 install -r requirements.txt
 
 WORKDIR "/"
 RUN apt-get update && apt-get install -y dotnet-sdk-3.1 ffmpeg fonts-noto-color-emoji fonts-noto-cjk-extra
-COPY run.sh .
 
 RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
 
 WORKDIR "/DanmakuProcess"
 RUN git clone https://github.com/valkjsaaa/bilibili-danmaku-energy-map.git ./
-RUN git checkout 47b5f71ae770e9038be55ef823f313f6dab0b3b4
+RUN git checkout 2a4c0dd21ddf32e9e10050ba5391e395aaab8fc7
 RUN pip3 install -r requirements.txt
 
-CMD /run.sh
+WORKDIR "/webhook"
+CMD python3 process_video.py
