@@ -6,7 +6,6 @@ from record_upload_manager import RecordUploadManager
 
 app = Quart(__name__)
 
-os.chdir("/storage")
 record_upload_manager = RecordUploadManager("./recorder_config.yaml", "recorder_save.yaml")
 
 

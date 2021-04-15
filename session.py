@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import os
+import sys
 import time
 from asyncio import Task
 from typing import Optional
@@ -13,12 +14,16 @@ from commons import BINARY_PATH
 
 async def async_wait_output(command):
     print(f"running: {command}")
+    sys.stdout.flush()
     process = await asyncio.create_subprocess_shell(
         command,
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE
     )
-    return await process.communicate()
+    return_value = await process.communicate()
+    sys.stdout.flush()
+    sys.stderr.flush()
+    return return_value
 
 
 class Video:
@@ -43,7 +48,7 @@ class Video:
         return self.base_path + ".xml"
 
     async def gen_thumbnail(self, he_time, png_file_path, video_log_path):
-        ffmpeg_command_img = f"ffmpeg -ss {he_time} -i \"{self.flv_file_path()}\" -vframes 1 \"{png_file_path}\"" \
+        ffmpeg_command_img = f"ffmpeg -y -ss {he_time} -i \"{self.flv_file_path()}\" -vframes 1 \"{png_file_path}\"" \
                              f" >> \"{video_log_path}\" 2>&1"
         await async_wait_output(ffmpeg_command_img)
 
@@ -123,11 +128,12 @@ class Session:
         }
 
     async def merge_xml(self):
+        xmls = ' '.join(['"' + video.xml_file_path() + '"' for video in self.videos])
         danmaku_merge_command = \
             f"python3 {BINARY_PATH}DanmakuProcess/danmaku_energy_map/merge_danmaku.py " \
-            f"{' '.join([video.xml_file_path() for video in self.videos])} " \
+            f"{xmls} " \
             f"--video_time \".flv\" " \
-            f"--output {self.output_path()['xml']} " \
+            f"--output \"{self.output_path()['xml']}\" " \
             f">> \"{self.output_path()['extras_log']}\" 2>&1"
         await async_wait_output(danmaku_merge_command)
 
@@ -172,6 +178,7 @@ class Session:
     async def process_danmaku(self):
         danmaku_conversion_command = \
             f"{BINARY_PATH}DanmakuFactory/DanmakuFactory " \
+            f"--ignore-warnings " \
             f"-o \"{self.output_path()['ass']}\" " \
             f"-i \"{self.output_path()['xml']}\" " \
             f"--fontname \"Noto Sans CJK SC\" -S 50 " \
@@ -204,7 +211,7 @@ class Session:
         video_bitrate = (max_size / total_time - audio_bitrate) - 500  # just to be safe
         max_video_bitrate = float(8000)  # BiliBili now re-encode every video anyways
         video_bitrate = int(min(max_video_bitrate, video_bitrate))
-        ffmpeg_command = f'''ffmpeg -loop 1 -t {total_time} \
+        ffmpeg_command = f'''ffmpeg -y -loop 1 -t {total_time} \
         -i "{self.output_path()['he_graph']}" \
         -f concat \
         -safe 0 \

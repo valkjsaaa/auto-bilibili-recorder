@@ -52,7 +52,7 @@ class UploadTask:
                     {
                         "desc": "",
                         "filename": filename,
-                        "title": os.path.basename(filename)
+                        "title": os.path.basename(self.video_path)
                     }
                 ]
             }
@@ -82,7 +82,7 @@ class UploadTask:
                     [{
                         "desc": video['desc'],
                         "filename": filename if idx == 0 else video['filename'],
-                        "title": video['title']
+                        "title": os.path.basename(self.video_path)
                     } for idx, video in enumerate(v["videos"])]
                 ,
                 "handle_staff": False,

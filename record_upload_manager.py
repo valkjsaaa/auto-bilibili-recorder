@@ -19,6 +19,7 @@ from upload_task import UploadTask
 
 CONTINUE_SESSION_MINUTES = 5
 WAIT_SESSION_MINUTES = 6
+WAIT_BEFORE_SESSION_MINUTES = 1
 
 
 class RecordUploadManager:
@@ -40,11 +41,11 @@ class RecordUploadManager:
         self.comment_post_queue: Queue[CommentTask] = Queue()
         self.save_lock = threading.Lock()
         self.video_upload_thread = threading.Thread(target=self.video_uploader)
-        self.video_upload_thread.start()
         self.comment_post_thread = threading.Thread(target=self.comment_poster)
-        self.comment_post_thread.start()
         self.video_processing_loop = asyncio.new_event_loop()
         self.video_uploading_loop = asyncio.new_event_loop()
+        self.video_upload_thread.start()
+        self.comment_post_thread.start()
         self.video_uploading_thread = threading.Thread(target=lambda: self.video_processing_loop.run_forever())
         self.video_uploading_thread.start()
 
@@ -99,6 +100,7 @@ class RecordUploadManager:
                 time.sleep(60)
 
     async def upload_video(self, session):
+        await asyncio.sleep(WAIT_BEFORE_SESSION_MINUTES * 60)
         room_config = None
         for room in self.config.rooms:
             if room.id == session.room_id:
@@ -117,12 +119,24 @@ class RecordUploadManager:
             "y": session.start_time.year,
             "m": session.start_time.month,
             "d": session.start_time.day,
-            "yy": f"{session.start_time.year: 05}",
-            "mm": f"{session.start_time.month: 03}",
-            "dd": f"{session.start_time.day: 03}",
+            "yy": f"{session.start_time.year:04d}",
+            "mm": f"{session.start_time.month:02d}",
+            "dd": f"{session.start_time.day:02d}",
             "flv_path": session.videos[0].flv_file_path()
         }
         title = Template(room_config.title).substitute(substitute_dict)
+        temp_title = title
+        i = 1
+        other_video_titles = [
+            name for session_id, name in self.save.video_name_history.items()
+            if session_id != session.session_id
+        ]
+        while temp_title in other_video_titles:
+            i += 1
+            temp_title = f"temp_title{i}"
+        title = temp_title
+        with self.save_lock:
+            self.save.video_name_history[session.session_id] = title
         description = Template(room_config.description).substitute(substitute_dict)
         await session.gen_early_video()
         early_upload_task = None
@@ -150,7 +164,7 @@ class RecordUploadManager:
         await session.gen_danmaku_video()
         danmaku_upload_task = UploadTask(
             session_id=session.session_id,
-            video_path=session.early_video_path,
+            video_path=session.output_path()['danmaku_video'],
             thumbnail_path=session.output_path()['thumbnail'],
             sc_path=session.output_path()['sc_file'],
             he_path=session.output_path()['he_file'],
@@ -175,8 +189,9 @@ class RecordUploadManager:
         session_id = update_json["EventData"]["SessionId"]
         if update_json["EventType"] == "SessionStarted":
             for session in self.sessions.values():
+                now = datetime.datetime.now(datetime.timezone.utc)
                 if session.room_id == room_id and \
-                        (session.end_time - datetime.datetime.now()).seconds / 60 < CONTINUE_SESSION_MINUTES:
+                        (session.end_time - now).seconds / 60 < CONTINUE_SESSION_MINUTES:
                     self.sessions[session_id] = session
                     if session.upload_task is not None:
                         session.upload_task.cancel()

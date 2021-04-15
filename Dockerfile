@@ -23,7 +23,7 @@ RUN git clone https://github.com/valkjsaaa/BililiveRecorder.git
 
 WORKDIR "/BililiveRecorder"
 
-RUN git checkout cf3072a887d06494afcd0a0337d2103408e2a9f7
+RUN git checkout 7291d30d57a70ae4262d5d95bd1d07ac48949e3d
 RUN dotnet build BililiveRecorder.Cli/BililiveRecorder.Cli.csproj -c Release
 
 #ENTRYPOINT BililiveRecorder/BililiveRecorder.Cli/bin/Release/netcoreapp3.1/BililiveRecorder.Cli
@@ -63,5 +63,5 @@ RUN git clone https://github.com/valkjsaaa/bilibili-danmaku-energy-map.git ./
 RUN git checkout 2a4c0dd21ddf32e9e10050ba5391e395aaab8fc7
 RUN pip3 install -r requirements.txt
 
-WORKDIR "/webhook"
-CMD python3 process_video.py
+WORKDIR "/storage"
+CMD python3 /webhook/process_video.py

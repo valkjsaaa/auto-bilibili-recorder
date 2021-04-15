@@ -6,7 +6,7 @@ class TaskSave:
     def __init__(self):
         self.session_id_map: {str: str} = {}
         self.active_comment_tasks: [CommentTask] = []
-        self.video_name_history = []
+        self.video_name_history = {}
 
     def to_dict(self):
         return {
@@ -22,7 +22,7 @@ class TaskSave:
         assert type(task_save.session_id_map) is dict
         task_save.active_comment_tasks = [CommentTask.from_dict(task) for task in save_dict["active_comment_tasks"]]
         task_save.video_name_history = save_dict["video_name_history"]
-        assert type(task_save.video_name_history) is list
+        assert type(task_save.video_name_history) is dict
         return task_save
 
 

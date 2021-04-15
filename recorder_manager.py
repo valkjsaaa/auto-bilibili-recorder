@@ -10,7 +10,7 @@ def spawn_recorder(room):
         f"portable " \
         f"--webhook-url " \
         f'"http://127.0.0.1:10261/process_video" ' \
-        f'/storage ' \
+        f'/storage/ ' \
         f'{room} '
     print(f"swawn recorder for {room}: {spawn_command}")
     return subprocess.Popen(spawn_command, shell=True)
