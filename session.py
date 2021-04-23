@@ -3,6 +3,7 @@ import datetime
 import os
 import sys
 import time
+import traceback
 from asyncio import Task
 from typing import Optional
 
@@ -100,8 +101,13 @@ class Session:
             self.end_time = dateutil.parser.isoparse(update_json["EventTimestamp"])
 
     async def add_video(self, video):
+        try:
+            await video.query_meta()
+        except ValueError:
+            print(traceback.format_exc())
+            print(f"video corrupted, skipping: {video.flv_file_path()}")
+            return
         self.videos += [video]
-        await video.query_meta()
         new_length = self.total_length + video.video_length
         if (new_length // self.notify_length) != (self.total_length // self.notify_length):
             self.length_alert = True

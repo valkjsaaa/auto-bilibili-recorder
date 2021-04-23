@@ -1,7 +1,8 @@
 import os.path
-import sys
 
 from bilibili_api.video import video_upload, video_cover_upload, video_submit, get_video_info, video_update
+
+SPECIAL_SPACE = "\u2007"
 
 
 class UploadTask:
@@ -25,12 +26,13 @@ class UploadTask:
     def upload(self, session_dict: {str: str}):
         def on_progress(update):
             print(update)
+
         filename = video_upload(self.video_path, verify=self.verify, on_progress=on_progress)
+        if self.danmaku:
+            suffix = "弹幕高能版"
+        else:
+            suffix = "无弹幕版"
         if self.session_id not in session_dict:
-            if self.danmaku:
-                suffix = "弹幕高能版"
-            else:
-                suffix = "无弹幕版"
             cover_url = video_cover_upload(self.thumbnail_path, verify=self.verify)
             data = {
                 "copyright": 2,
@@ -47,7 +49,7 @@ class UploadTask:
                 },
                 "tag": self.tag,
                 "tid": self.channel_id,
-                "title": self.title + " " + suffix,
+                "title": self.title + SPECIAL_SPACE + suffix,
                 "videos": [
                     {
                         "desc": "",
@@ -58,16 +60,17 @@ class UploadTask:
             }
 
             result = video_submit(data, self.verify)
-            print(f"{self.title} uploaded: {result}", file=sys.stderr)
+            print(f"{self.title} uploaded: {result}")
             return result['bvid']
         else:
             old_bv = session_dict[self.session_id]
             v = get_video_info(bvid=old_bv, is_simple=False, is_member=True, verify=self.verify)
             old_title = v["archive"]["title"]
-            if self.danmaku and "无弹幕版" in old_title:
-                new_title = old_title.replace("无弹幕版", "弹幕高能版")
+            if SPECIAL_SPACE in old_title:
+                stripped_title = old_title.rpartition(SPECIAL_SPACE)[0]
             else:
-                new_title = old_title
+                stripped_title = old_title
+            new_title = stripped_title + SPECIAL_SPACE + suffix
             data = {
                 "copyright": v["archive"]['copyright'],
                 "source": v["archive"]["source"],
@@ -83,12 +86,10 @@ class UploadTask:
                         "desc": video['desc'],
                         "filename": filename if idx == 0 else video['filename'],
                         "title": os.path.basename(self.video_path)
-                    } for idx, video in enumerate(v["videos"])]
-                ,
+                    } for idx, video in enumerate(v["videos"])],
                 "handle_staff": False,
                 'bvid': v["archive"]["bvid"]
             }
             result = video_update(data, self.verify)
             print(f"{data['title']} updated: {result}")
             return result['bvid']
-

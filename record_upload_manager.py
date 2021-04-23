@@ -1,12 +1,13 @@
 import asyncio
-import datetime
 import os.path
+import sys
 import threading
 import time
 import traceback
 from queue import Queue
 from string import Template
 
+import dateutil.parser
 import yaml
 from bilibili_api import Verify
 
@@ -59,6 +60,7 @@ class RecordUploadManager:
             upload_task = self.video_upload_queue.get()
             try:
                 bv_id = upload_task.upload(self.save.session_id_map)
+                sys.stdout.flush()
                 with self.save_lock:
                     self.save.session_id_map[upload_task.session_id] = bv_id
                     self.save_progress()
@@ -101,6 +103,9 @@ class RecordUploadManager:
 
     async def upload_video(self, session):
         await asyncio.sleep(WAIT_BEFORE_SESSION_MINUTES * 60)
+        if len(session.videos) == 0:
+            print(f"No video in session: {session.room_id}@{session.session_id}")
+            return
         room_config = None
         for room in self.config.rooms:
             if room.id == session.room_id:
@@ -133,7 +138,7 @@ class RecordUploadManager:
         ]
         while temp_title in other_video_titles:
             i += 1
-            temp_title = f"temp_title{i}"
+            temp_title = f"{temp_title}{i}"
         title = temp_title
         with self.save_lock:
             self.save.video_name_history[session.session_id] = title
@@ -187,11 +192,11 @@ class RecordUploadManager:
     async def handle_update(self, update_json: dict):
         room_id = update_json["EventData"]["RoomId"]
         session_id = update_json["EventData"]["SessionId"]
+        event_timestamp = dateutil.parser.isoparse(update_json["EventTimestamp"])
         if update_json["EventType"] == "SessionStarted":
             for session in self.sessions.values():
-                now = datetime.datetime.now(datetime.timezone.utc)
                 if session.room_id == room_id and \
-                        (session.end_time - now).seconds / 60 < CONTINUE_SESSION_MINUTES:
+                        (event_timestamp - session.end_time).total_seconds() / 60 < CONTINUE_SESSION_MINUTES:
                     self.sessions[session_id] = session
                     if session.upload_task is not None:
                         session.upload_task.cancel()

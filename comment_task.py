@@ -48,7 +48,7 @@ class CommentTask:
         return comment_task
 
     def post_comment(self, session_dict: {str: str}) -> bool:
-        if (datetime.datetime.now(datetime.timezone.utc) - self.start_date).seconds / 60 / 60 > HOURS_THRESHOLD:
+        if (datetime.datetime.now(datetime.timezone.utc) - self.start_date).total_seconds() / 60 / 60 > HOURS_THRESHOLD:
             return True
         if self.session_id not in session_dict:
             return False
