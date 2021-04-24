@@ -7,12 +7,13 @@ SPECIAL_SPACE = "\u2007"
 
 class UploadTask:
 
-    def __init__(self, session_id, video_path, thumbnail_path, sc_path, he_path,
+    def __init__(self, session_id, video_path, thumbnail_path, sc_path, he_path, subtitle_path,
                  title, source, description, tag, channel_id, danmaku, verify):
         self.session_id = session_id
         self.video_path = video_path
         self.sc_path = sc_path
         self.he_path = he_path
+        self.subtitle_path = subtitle_path
         self.thumbnail_path = thumbnail_path
         self.title = title
         self.source = source
@@ -54,7 +55,7 @@ class UploadTask:
                     {
                         "desc": "",
                         "filename": filename,
-                        "title": os.path.basename(self.video_path)
+                        "title": suffix
                     }
                 ]
             }
@@ -83,13 +84,18 @@ class UploadTask:
                 "title": new_title,
                 "videos":
                     [{
+                        "desc": "",
+                        "filename": filename,
+                        "title": suffix
+                    }] +
+                    [{
                         "desc": video['desc'],
-                        "filename": filename if idx == 0 else video['filename'],
-                        "title": os.path.basename(self.video_path)
-                    } for idx, video in enumerate(v["videos"])],
+                        "filename": video['filename'],
+                        "title": video['title']
+                    } for video in v["videos"]],
                 "handle_staff": False,
                 'bvid': v["archive"]["bvid"]
             }
             result = video_update(data, self.verify)
             print(f"{data['title']} updated: {result}")
-            return result['bvid']
+            return result['bvid'],

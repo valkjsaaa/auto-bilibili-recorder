@@ -9,12 +9,13 @@ from string import Template
 
 import dateutil.parser
 import yaml
-from bilibili_api import Verify
+from bilibili_api import Verify, video
 
 from comment_task import CommentTask
 from recorder_config import RecorderConfig, UploaderAccount
 from recorder_manager import RecorderManager
 from session import Session, Video
+from subtitle_task import SubtitleTask
 from task_save import TaskSave
 from upload_task import UploadTask
 
@@ -40,13 +41,17 @@ class RecordUploadManager:
         self.sessions: {str: Session} = dict()
         self.video_upload_queue: Queue[UploadTask] = Queue()
         self.comment_post_queue: Queue[CommentTask] = Queue()
+        self.subtitle_post_queue: Queue[SubtitleTask] = Queue()
         self.save_lock = threading.Lock()
         self.video_upload_thread = threading.Thread(target=self.video_uploader)
         self.comment_post_thread = threading.Thread(target=self.comment_poster)
+        self.subtitle_post_thread = threading.Thread(target=self.subtitle_poster)
         self.video_processing_loop = asyncio.new_event_loop()
         self.video_uploading_loop = asyncio.new_event_loop()
+        self.subtitle_posting_loop = asyncio.new_event_loop()
         self.video_upload_thread.start()
         self.comment_post_thread.start()
+        self.subtitle_post_thread.start()
         self.video_uploading_thread = threading.Thread(target=lambda: self.video_processing_loop.run_forever())
         self.video_uploading_thread.start()
 
@@ -59,11 +64,21 @@ class RecordUploadManager:
         while True:
             upload_task = self.video_upload_queue.get()
             try:
+                first_video_comment = upload_task.session_id not in self.save.session_id_map
                 bv_id = upload_task.upload(self.save.session_id_map)
                 sys.stdout.flush()
                 with self.save_lock:
                     self.save.session_id_map[upload_task.session_id] = bv_id
                     self.save_progress()
+                if first_video_comment:
+                    self.comment_post_queue.put(
+                        CommentTask.from_upload_task(upload_task)
+                    )
+                v_info = video.get_video_info(bvid=bv_id, is_simple=False, is_member=True, verify=upload_task.verify)
+                cid = v_info['videos'][0]['cid']
+                self.subtitle_post_queue.put(
+                    SubtitleTask.from_upload_task(upload_task, bv_id, cid)
+                )
             except Exception:
                 if upload_task.trial < 5:
                     upload_task.trial += 1
@@ -92,6 +107,34 @@ class RecordUploadManager:
                             self.save.active_comment_tasks = [
                                 comment_task
                                 for idx, comment_task in enumerate(self.save.active_comment_tasks)
+                                if idx not in task_to_remove
+                            ]
+                            self.save_progress()
+            except Exception as err:
+                print(f"Unknown posting exception: {err}")
+                print(traceback.format_exc())
+            finally:
+                time.sleep(60)
+
+    def subtitle_poster(self):
+        asyncio.set_event_loop(self.subtitle_posting_loop)
+        while True:
+            with self.save_lock:
+                while not self.subtitle_post_queue.empty():
+                    self.save.active_subtitle_tasks += [self.subtitle_post_queue.get()]
+                    self.save_progress()
+            try:
+                if len(self.save.active_subtitle_tasks) != 0:
+                    task_to_remove = []
+                    for idx, task in enumerate(self.save.active_subtitle_tasks):
+                        task: SubtitleTask
+                        if task.post_subtitle():
+                            task_to_remove += [idx]
+                    if task_to_remove != 0:
+                        with self.save_lock:
+                            self.save.active_subtitle_tasks = [
+                                subtitle_task
+                                for idx, subtitle_task in enumerate(self.save.active_subtitle_tasks)
                                 if idx not in task_to_remove
                             ]
                             self.save_progress()
@@ -152,6 +195,7 @@ class RecordUploadManager:
                 thumbnail_path=session.output_path()['thumbnail'],
                 sc_path=session.output_path()['sc_file'],
                 he_path=session.output_path()['he_file'],
+                subtitle_path=session.output_path()['sc_srt'],
                 title=title,
                 source=room_config.source,
                 description=description,
@@ -162,10 +206,6 @@ class RecordUploadManager:
             )
             self.video_upload_queue.put(early_upload_task)
         await asyncio.sleep(WAIT_SESSION_MINUTES * 60)
-        if early_upload_task is not None:
-            self.comment_post_queue.put(
-                CommentTask.from_upload_task(early_upload_task)
-            )
         await session.gen_danmaku_video()
         danmaku_upload_task = UploadTask(
             session_id=session.session_id,
@@ -173,6 +213,7 @@ class RecordUploadManager:
             thumbnail_path=session.output_path()['thumbnail'],
             sc_path=session.output_path()['sc_file'],
             he_path=session.output_path()['he_file'],
+            subtitle_path=session.output_path()['sc_srt'],
             title=title,
             source=room_config.source,
             description=description,

@@ -202,7 +202,7 @@ class Session:
                 break
         if not format_check:
             return
-        ffmpeg_command = f'''ffmpeg \
+        ffmpeg_command = f'''ffmpeg -y \
         -f concat \
         -safe 0 \
         -i "{self.output_path()['concat_file']}" \

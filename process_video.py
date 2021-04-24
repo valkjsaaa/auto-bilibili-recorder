@@ -1,5 +1,3 @@
-import os
-
 from quart import Quart, request, Response
 
 from record_upload_manager import RecordUploadManager
