@@ -14,6 +14,7 @@ class TaskSave:
         return {
             "session_id_map": self.session_id_map,
             "active_comment_tasks": [task.to_dict() for task in self.active_comment_tasks],
+            "active_subtitle_tasks": [task.to_dict() for task in self.active_subtitle_tasks],
             "video_name_history": self.video_name_history
         }
 

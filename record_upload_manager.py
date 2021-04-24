@@ -158,6 +158,9 @@ class RecordUploadManager:
             return
         if room_config.uploader is None:
             print(f"No need to upload for {room_config.id}")
+            await session.gen_early_video()
+            await asyncio.sleep(WAIT_SESSION_MINUTES * 60)
+            await session.gen_danmaku_video()
             return
         uploader: UploaderAccount = self.config.accounts[room_config.uploader]
         substitute_dict = {

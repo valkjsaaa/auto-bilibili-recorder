@@ -10,6 +10,9 @@ Bilibili 全自动录播上传脚本
 * 压制带有高能进度条，弹幕的视频（部分 Nvidia GPU 支持 nvenc 加速）
 * 自动用换源方法更新高能弹幕版的视频
 * 生成醒目留言字幕（但是上传目前是手动的）
+* （新）边录边修大部分录播数据流格式问题（来自 B站录播姬 v1.3)
+* （新）主播意外下播，很快重新上播时会自动拼接
+* （新）只需要一个配置文件
 
 ### 例子
 
@@ -19,22 +22,30 @@ Bilibili 全自动录播上传脚本
 
 文件夹设置：
 1. 建一个空文件夹
-2. 里面放入 `upload-task.yaml` 和 `comment-task.yaml` 。
-   这两个文件是用于记录已经上传的录播和上传未审核的录播所需要发的评论的。
-3. 放入 `config.json` ，可以根据 `config.example.json` 改。
-   注意不要改 46 行的 webhook 。根据你需要录制的直播间填写。
-4. 放入 `bilibili-config.yaml` 可以根据 `bilibili-config.example.yaml` 改。
-   填入 `sessdata` 和 `bili_jct` 两项，可以参考 [Passkou/bilibili-api](https://github.com/Passkou/bilibili-api#获取-sessdata-和-csrf) ，
-   填入需要上传的直播间号，注意要用长号，例如 128308 ，而不是短号，比如 261 。
+2. 放入 `recorder_config.yaml` ，可以根据 [`recorder_config.example.yaml`] 改。
+
 
 文件夹设置完的目录结构如下：
 ```
 ${录制目标文件夹}
- |-- upload-task.yaml
- |-- comment-task.yaml
- |-- config.json
- `-- bilibili-config.yaml
+ `-- recorder_config.yaml
 ```
+
+模版使用（视频标题和描述可以使用）：
+配置文件中的视频标题和描述可以使用[模版语言](https://docs.python.org/3/library/string.html#template-strings) 。包含以下模版：
+* `$name`：主播名字
+* `$title`：主播直播间名称，以主播下播时的设置为准
+* `$uploader_name`：上传者名字，也就是 `account` 里的 `name`
+* `$y`：没有前缀0的年份，如 2021 （年）
+* `$m`：没有前缀0的月份，如 4 （月）
+* `$d`：没有前缀0的日期，如 1 （日）
+* `$yy`：有前缀0的年份，如 2021 （年）
+* `$mm`：有前缀0的月份，如 04 （月）
+* `$dd`：有前缀0的日期，如 01 （日）
+* `$flv_path`：录播文件所对应的相对目录
+
+常见例子：
+  `测试【$name】$yy年$mm月$dd日 $title` 会变成 "测试【碳酸熊卡】2021年04月24日 竟是阳间直播人"
 
 使用 docker 运行脚本：
 
@@ -56,7 +67,7 @@ ${录制目标文件夹}
    ```
 3. 运行 docker 镜像：
 
-   无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:2.4b`
+   无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:3.3`
 3. 停止录播：
 
    有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:2.4b`

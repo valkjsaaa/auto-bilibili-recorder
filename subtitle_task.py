@@ -1,5 +1,6 @@
 import datetime
 import json
+import traceback
 from typing import Any
 
 import bilibili_api
@@ -47,6 +48,10 @@ class SubtitleTask:
             return True
         if self.error_count > ERROR_THRESHOLD:
             return True
+        try:
+            video.get_video_info(self.bvid)
+        except bilibili_api.exceptions.BilibiliApiException:  # Video not published yet
+            return False
         self.error_count += 1
         verify = Verify(self.sessdata, self.csrf)
         with open(self.subtitle_path) as srt_file:
@@ -70,6 +75,7 @@ class SubtitleTask:
             }
             srt_json["body"] += [srt_single_obj_body]
         srt_json_str = json.dumps(srt_json)
+        print(f"posting subtitles on {self.cid} of {self.bvid}")
         try:
             video.save_subtitle(srt_json_str, bvid=self.bvid, cid=self.cid, verify=verify)
         except bilibili_api.exceptions.BilibiliApiException as e:
@@ -78,6 +84,7 @@ class SubtitleTask:
                 self.error_count -= 1
                 return False
             else:
+                print(traceback.format_exc())
                 return False
         return True
 

@@ -59,6 +59,7 @@ class CommentTask:
             video.get_video_info(bvid)
         except bilibili_api.exceptions.BilibiliApiException:  # Video not published yet
             return False
+        print(f"posting comments on {bvid}")
         self.error_count += 1
         verify = Verify(self.sessdata, self.csrf)
         # load sc and se text
