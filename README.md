@@ -65,12 +65,14 @@ ${录制目标文件夹}
    
    sudo systemctl restart docker
    ```
-3. 运行 docker 镜像：
+   
+2. 运行 docker 镜像：
 
    无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:3.3`
-3. 停止录播：
 
    有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:2.4b`
+
+3. 停止录播：
 
    `sudo docker rm -f auto-bilibili-recorder`
 
