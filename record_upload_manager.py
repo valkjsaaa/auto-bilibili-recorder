@@ -76,6 +76,7 @@ class RecordUploadManager:
                     )
                 v_info = video.get_video_info(bvid=bv_id, is_simple=False, is_member=True, verify=upload_task.verify)
                 cid = v_info['videos'][0]['cid']
+                print("adding subtitle task to queue")
                 self.subtitle_post_queue.put(
                     SubtitleTask.from_upload_task(upload_task, bv_id, cid)
                 )
@@ -128,6 +129,7 @@ class RecordUploadManager:
                     task_to_remove = []
                     for idx, task in enumerate(self.save.active_subtitle_tasks):
                         task: SubtitleTask
+                        print("try posting subtitle")
                         if task.post_subtitle():
                             task_to_remove += [idx]
                     if task_to_remove != 0:
@@ -205,7 +207,7 @@ class RecordUploadManager:
                 tag=room_config.tags,
                 channel_id=room_config.channel_id,
                 danmaku=False,
-                verify=Verify(uploader.sessdata, uploader.bili_jct)
+                account=uploader
             )
             self.video_upload_queue.put(early_upload_task)
         await asyncio.sleep(WAIT_SESSION_MINUTES * 60)
@@ -223,7 +225,7 @@ class RecordUploadManager:
             tag=room_config.tags,
             channel_id=room_config.channel_id,
             danmaku=True,
-            verify=Verify(uploader.sessdata, uploader.bili_jct)
+            account=uploader
         )
         self.video_upload_queue.put(
             danmaku_upload_task

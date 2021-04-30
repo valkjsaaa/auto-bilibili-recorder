@@ -1,5 +1,6 @@
 import datetime
 import traceback
+import re
 from typing import Any
 
 import bilibili_api
@@ -11,6 +12,42 @@ from upload_task import UploadTask
 SEG_CHAR = '\n\n\n\n'
 ERROR_THRESHOLD = 10
 HOURS_THRESHOLD = 12
+
+TEXT_LIMIT = 900
+
+
+def segment_text(text):
+    lines = text.split('\n')
+    new_text = ""
+    new_segment = ""
+
+    for line in lines:
+        if len(new_segment) + len(line) < TEXT_LIMIT:
+            new_segment += line + "\n"
+        else:
+            if len(line) > TEXT_LIMIT:
+                print(f"line\"{line}\" too long, omit.")
+            else:
+                new_text += new_segment + SEG_CHAR
+                new_segment = line + "\n"
+    new_text += new_segment
+    return new_text
+
+
+def process_text(text, bvid):
+    text.replace(SEG_CHAR, "\n")
+    lines = text.split('\n')
+    new_lines = []
+    for line in lines:
+        matches = re.findall("^\\s+([0-9]+):([0-9]+)", line)
+        if len(matches) > 0:
+            mins = matches[0][0]
+            secs = matches[0][1]
+            link = f"https://www.bilibili.com/video/{bvid}?t={mins}m{secs}s"
+            line += "\t" + link
+        new_lines += [line]
+    new_str = "\n".join(new_lines)
+    return segment_text(new_str)
 
 
 class CommentTask:
@@ -64,8 +101,10 @@ class CommentTask:
         verify = Verify(self.sessdata, self.csrf)
         # load sc and se text
         with open(self.sc_path, 'r') as file:
+            # sc_str = process_text(file.read(), bvid)
             sc_str = file.read()
         with open(self.he_path, 'r') as file:
+            # he_str = process_text(file.read(), bvid)
             he_str = file.read()
         sc_list = sc_str.split(SEG_CHAR)
         he_list = he_str.split(SEG_CHAR)
@@ -95,6 +134,7 @@ class CommentTask:
 
 if __name__ == '__main__':
     import yaml
+
     ct_1 = CommentTask("sc_path", "he_path", "session_id", Verify("sessdata", "csrf"))
     ct_yaml = yaml.dump(ct_1.to_dict())
     ct_2 = CommentTask.from_dict(yaml.load(ct_yaml))

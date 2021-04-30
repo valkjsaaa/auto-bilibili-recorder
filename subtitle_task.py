@@ -80,7 +80,7 @@ class SubtitleTask:
             video.save_subtitle(srt_json_str, bvid=self.bvid, cid=self.cid, verify=verify)
         except bilibili_api.exceptions.BilibiliApiException as e:
             # noinspection PyUnresolvedReferences
-            if hasattr(e, 'code') and e.code == 79022:  # video not approved yet
+            if hasattr(e, 'code') and (e.code == 79022 or e.code == -404 or e.code == 502):  # video not approved yet
                 self.error_count -= 1
                 return False
             else:

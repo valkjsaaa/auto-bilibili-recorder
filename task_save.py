@@ -24,7 +24,11 @@ class TaskSave:
         task_save.session_id_map = save_dict["session_id_map"]
         assert type(task_save.session_id_map) is dict
         task_save.active_comment_tasks = [CommentTask.from_dict(task) for task in save_dict["active_comment_tasks"]]
-        task_save.active_subtitle_tasks = [] if "active_subtitle_tasks" not in save_dict else [SubtitleTask for task in save_dict["active_subtitle_tasks"]]
+        if "active_subtitle_tasks" not in save_dict:
+            task_save.active_subtitle_tasks = []
+        else:
+            task_save.active_subtitle_tasks = \
+                [SubtitleTask.from_dict(task) for task in save_dict["active_subtitle_tasks"]]
         task_save.video_name_history = save_dict["video_name_history"]
         assert type(task_save.video_name_history) is dict
         return task_save

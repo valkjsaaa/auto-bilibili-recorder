@@ -1,6 +1,8 @@
 import os.path
 
-from bilibili_api.video import video_upload, video_cover_upload, video_submit, get_video_info, video_update
+from bilibili_api.video import video_upload, video_cover_upload, video_submit, get_video_info, video_update_app
+
+from recorder_config import UploaderAccount
 
 SPECIAL_SPACE = "\u2007"
 
@@ -8,7 +10,7 @@ SPECIAL_SPACE = "\u2007"
 class UploadTask:
 
     def __init__(self, session_id, video_path, thumbnail_path, sc_path, he_path, subtitle_path,
-                 title, source, description, tag, channel_id, danmaku, verify):
+                 title, source, description, tag, channel_id, danmaku, account: UploaderAccount):
         self.session_id = session_id
         self.video_path = video_path
         self.sc_path = sc_path
@@ -21,7 +23,8 @@ class UploadTask:
         self.tag = tag
         self.channel_id = channel_id
         self.danmaku = danmaku
-        self.verify = verify
+        self.account = account
+        self.verify = self.account.verify
         self.trial = 0
 
     def upload(self, session_dict: {str: str}):
@@ -87,15 +90,15 @@ class UploadTask:
                         "desc": "",
                         "filename": filename,
                         "title": suffix
-                    }] +
-                    [{
-                        "desc": video['desc'],
-                        "filename": video['filename'],
-                        "title": video['title']
-                    } for video in v["videos"]],
+                    }],
+                    # [{
+                    #     "desc": video['desc'],
+                    #     "filename": video['filename'],
+                    #     "title": video['title']
+                    # } for video in v["videos"]],
                 "handle_staff": False,
                 'bvid': v["archive"]["bvid"]
             }
-            result = video_update(data, self.verify)
+            result = video_update_app(data, self.verify, self.account.access_token)
             print(f"{data['title']} updated: {result}")
-            return result['bvid'],
+            return result['bvid']

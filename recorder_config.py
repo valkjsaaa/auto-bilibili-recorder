@@ -1,14 +1,32 @@
 from typing import Optional
 
+from bilibili_api import Verify
+
+from bilibili import Bilibili
+
 
 class UploaderAccount:
     name: str
+    username: str
+    password: str
     sessdata: str
     bili_jct: str
+    access_token: str
+    verify: Verify
 
     def __init__(self, config_dict):
         for key, value in config_dict.items():
             self.__setattr__(key, value)
+        self.login()
+
+    def login(self):
+        b = Bilibili()
+        b.login(username=self.username, password=self.password)
+        self.access_token = b.access_token
+        self.sessdata = b._session.cookies['SESSDATA']
+        self.bili_jct = b._session.cookies['bili_jct']
+        print(f"login successfully! {self.name} {self.access_token} {self.sessdata} {self.bili_jct}")
+        self.verify = Verify(sessdata=self.sessdata, csrf=self.bili_jct)
 
 
 class RecoderRoom:
