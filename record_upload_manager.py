@@ -9,7 +9,7 @@ from string import Template
 
 import dateutil.parser
 import yaml
-from bilibili_api import Verify, video
+from bilibili_api import video
 
 from comment_task import CommentTask
 from recorder_config import RecorderConfig, UploaderAccount
@@ -134,11 +134,21 @@ class RecordUploadManager:
                             task_to_remove += [idx]
                     if task_to_remove != 0:
                         with self.save_lock:
-                            self.save.active_subtitle_tasks = [
-                                subtitle_task
-                                for idx, subtitle_task in enumerate(self.save.active_subtitle_tasks)
-                                if idx not in task_to_remove
-                            ]
+                            new_subtitle_tasks = []
+                            for idx, subtitle_task in enumerate(self.save.active_subtitle_tasks):
+                                subtitle_task: SubtitleTask
+                                append = True
+                                if idx in task_to_remove:
+                                    append = False
+                                else:
+                                    for j in task_to_remove:
+                                        removing_task = self.save.active_subtitle_tasks[j]
+                                        if subtitle_task.is_earlier_task_of(removing_task):
+                                            append = False
+                                            break
+                                if append:
+                                    new_subtitle_tasks += [subtitle_task]
+                            self.save.active_subtitle_tasks = new_subtitle_tasks
                             self.save_progress()
             except Exception as err:
                 print(f"Unknown posting exception: {err}")

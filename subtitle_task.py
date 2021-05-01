@@ -14,7 +14,7 @@ HOURS_THRESHOLD = 12
 
 
 class SubtitleTask:
-    def __init__(self, subtitle_path: str, bvid: str,  cid: int, verify: Verify):
+    def __init__(self, subtitle_path: str, bvid: str, cid: int, verify: Verify):
         self.subtitle_path = subtitle_path
         self.cid = cid
         self.bvid = bvid
@@ -42,6 +42,9 @@ class SubtitleTask:
     def from_upload_task(upload_task: UploadTask, bvid: str, cid: int) -> 'SubtitleTask':
         comment_task = SubtitleTask(upload_task.subtitle_path, bvid, cid, upload_task.verify)
         return comment_task
+
+    def is_earlier_task_of(self, new_task: 'SubtitleTask'):
+        return new_task.bvid == self.bvid and new_task.start_date > self.start_date
 
     def post_subtitle(self) -> bool:
         if (datetime.datetime.now(datetime.timezone.utc) - self.start_date).total_seconds() / 60 / 60 > HOURS_THRESHOLD:
