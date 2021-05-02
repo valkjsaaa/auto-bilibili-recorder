@@ -10,7 +10,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y wget git apt-transport-https software-properties-common
 RUN add-apt-repository universe
-RUN apt-get update && apt-get install -y wget ffmpeg fonts-noto-color-emoji fonts-noto-cjk-extra cmake
+RUN apt-get update && apt-get install -y wget ffmpeg fonts-noto-color-emoji fonts-noto-cjk-extra cmake python3 python3-pip
 RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
 
 RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
@@ -21,32 +21,26 @@ RUN apt-get update && apt-get install -y dotnet-sdk-5.0 powershell
 
 RUN ln -s /usr/bin/pwsh /usr/bin/powershell
 
-RUN git clone https://github.com/valkjsaaa/BililiveRecorder.git
+RUN git clone https://github.com/valkjsaaa/BililiveRecorder.git && cd BililiveRecorder && git checkout e5bbb8f8aa384368a230470949a44a41f033bcf9
 
 WORKDIR "/BililiveRecorder"
 
-RUN git checkout 7291d30d57a70ae4262d5d95bd1d07ac48949e3d
 RUN dotnet build BililiveRecorder.Cli/BililiveRecorder.Cli.csproj -c Release
 
 #ENTRYPOINT BililiveRecorder/BililiveRecorder.Cli/bin/Release/netcoreapp3.1/BililiveRecorder.Cli
 
 WORKDIR "/"
 
-RUN git clone https://github.com/valkjsaaa/DanmakuFactory.git
+RUN git clone https://github.com/valkjsaaa/DanmakuFactory.git && cd DanmakuFactory && git checkout 8d376672da6346dd9da91738d9b6232d5d9a37cf
 
 WORKDIR "/DanmakuFactory"
 
-RUN git checkout 8d376672da6346dd9da91738d9b6232d5d9a37cf
 RUN mkdir temp
 RUN make -f makefile_64
-RUN apt-get update && apt-get install -y python3 python3-pip
 
 #ENTRYPOINT /bin/bash
 
-WORKDIR "/DanmakuProcess"
-RUN git clone https://github.com/valkjsaaa/bilibili-danmaku-energy-map.git ./
-RUN git checkout 2a4c0dd21ddf32e9e10050ba5391e395aaab8fc7
-RUN pip3 install -r requirements.txt
+RUN pip3 install git+https://github.com/valkjsaaa/danmaku_tools.git@0b2e7511ea44b1c8ac695311476fe130a8653994
 
 WORKDIR "/webhook"
 

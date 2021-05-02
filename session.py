@@ -126,6 +126,7 @@ class Session:
             "thumbnail": self.output_base_path() + ".thumb.png",
             "he_graph": self.output_base_path() + ".he.png",
             "he_file": self.output_base_path() + ".he.txt",
+            "he_range": self.output_base_path() + ".he_range.txt",
             "sc_file": self.output_base_path() + ".sc.txt",
             "sc_srt": self.output_base_path() + ".sc.srt",
             "he_pos": self.output_base_path() + ".he_pos.txt",
@@ -136,7 +137,7 @@ class Session:
     async def merge_xml(self):
         xmls = ' '.join(['"' + video.xml_file_path() + '"' for video in self.videos])
         danmaku_merge_command = \
-            f"python3 {BINARY_PATH}DanmakuProcess/danmaku_energy_map/merge_danmaku.py " \
+            f"python3 -m danmaku_tools.merge_danmaku " \
             f"{xmls} " \
             f"--video_time \".flv\" " \
             f"--output \"{self.output_path()['xml']}\" " \
@@ -145,12 +146,13 @@ class Session:
 
     async def process_xml(self):
         danmaku_extras_command = \
-            f"python3 {BINARY_PATH}DanmakuProcess/danmaku_energy_map/danmaku_energy_map.py " \
+            f"python3 -m danmaku_tools.danmaku_energy_map " \
             f"--graph \"{self.output_path()['he_graph']}\" " \
             f"--he_map \"{self.output_path()['he_file']}\" " \
             f"--sc_list \"{self.output_path()['sc_file']}\" " \
             f"--he_time \"{self.output_path()['he_pos']}\" " \
             f"--sc_srt \"{self.output_path()['sc_srt']}\" " \
+            f"--he_range \"{self.output_path()['he_range']}\" " \
             f"\"{self.output_path()['xml']}\" " \
             f">> \"{self.output_path()['extras_log']}\" 2>&1"
         await async_wait_output(danmaku_extras_command)

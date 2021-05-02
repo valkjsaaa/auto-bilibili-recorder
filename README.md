@@ -9,10 +9,11 @@ Bilibili 全自动录播上传脚本
 * 自动根据弹幕和礼物密度检测直播高能区域
 * 压制带有高能进度条，弹幕的视频（部分 Nvidia GPU 支持 nvenc 加速）
 * 自动用换源方法更新高能弹幕版的视频
-* 生成醒目留言字幕（但是上传目前是手动的）
+* （新）生成并上传醒目留言字幕
 * （新）边录边修大部分录播数据流格式问题（来自 B站录播姬 v1.3)
 * （新）主播意外下播，很快重新上播时会自动拼接
 * （新）只需要一个配置文件
+* （新）高能路牌自动提取最相关的弹幕
 
 ### 例子
 
@@ -22,7 +23,7 @@ Bilibili 全自动录播上传脚本
 
 文件夹设置：
 1. 建一个空文件夹
-2. 放入 `recorder_config.yaml` ，可以根据 [`recorder_config.example.yaml`] 改。
+2. 放入 `recorder_config.yaml` ，可以根据 [`recorder_config.example.yaml`](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/recorder_config.py) 改。
 
 
 文件夹设置完的目录结构如下：
@@ -68,7 +69,7 @@ ${录制目标文件夹}
    
 2. 运行 docker 镜像：
 
-   无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:3.3`
+   无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:3.5`
 
    有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:2.4b`
 
