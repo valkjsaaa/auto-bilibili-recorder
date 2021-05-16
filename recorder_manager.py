@@ -5,8 +5,7 @@ from commons import BINARY_PATH
 
 def spawn_recorder(room):
     spawn_command = \
-        f"dotnet " \
-        f"{BINARY_PATH}BililiveRecorder/BililiveRecorder.Cli/bin/Release/net5.0/BililiveRecorder.Cli.dll " \
+        f"{BINARY_PATH}BililiveRecorder/BililiveRecorder.Cli/bin/Release/net5.0/BililiveRecorder.Cli " \
         f"portable " \
         f"--webhook-url " \
         f'"http://127.0.0.1:10261/process_video" ' \

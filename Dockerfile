@@ -1,8 +1,8 @@
 # Auto bilibili live recording server
 #
 # VERSION               0.0.1
-
-FROM nvidia/cuda:11.0-devel-ubuntu20.04
+ARG COMMON_IMAGE=nvidia/cuda:11.0-devel-ubuntu20.04
+FROM ${COMMON_IMAGE}
 
 ENV TZ=Asia/Shanghai
 ARG DEBIAN_FRONTEND=noninteractive
@@ -11,13 +11,13 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y wget git apt-transport-https software-properties-common
 RUN add-apt-repository universe
 RUN apt-get update && apt-get install -y wget ffmpeg fonts-noto-color-emoji fonts-noto-cjk-extra cmake python3 python3-pip
-RUN ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
 
 RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 RUN dpkg -i packages-microsoft-prod.deb
 
 RUN apt-get update && apt-get install -y dotnet-sdk-5.0 powershell
-
+RUN rm -rf /var/lib/apt/lists/*
+RUN if [[ ${COMMON_IMAGE} == *"cuda"* ]] ; then ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 ; fi
 
 RUN ln -s /usr/bin/pwsh /usr/bin/powershell
 
@@ -26,6 +26,8 @@ RUN git clone https://github.com/valkjsaaa/BililiveRecorder.git && cd BililiveRe
 WORKDIR "/BililiveRecorder"
 
 RUN dotnet build BililiveRecorder.Cli/BililiveRecorder.Cli.csproj -c Release
+RUN dotnet nuget locals all --clear
+RUN apt -y remove dotnet-sdk-5.0 powershell
 
 #ENTRYPOINT BililiveRecorder/BililiveRecorder.Cli/bin/Release/netcoreapp3.1/BililiveRecorder.Cli
 
