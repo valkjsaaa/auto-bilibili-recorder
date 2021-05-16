@@ -23,7 +23,7 @@ Bilibili 全自动录播上传脚本
 
 文件夹设置：
 1. 建一个空文件夹
-2. 放入 `recorder_config.yaml` ，可以根据 [`recorder_config.example.yaml`](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/recorder_config.py) 改。
+2. 放入 `recorder_config.yaml` ，可以根据 [`recorder_config.example.yaml`](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/example_dir/recorder_config.example.yaml) 改。
 
 
 文件夹设置完的目录结构如下：
