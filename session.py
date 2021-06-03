@@ -265,48 +265,28 @@ class Session:
             return
         await self.process_video()
 
-#
-# if __name__ == '__main__':
-#     BINARY_PATH = "../exes/"
-#     session_json = {'EventType': 'SessionStarted', 'EventTimestamp': '2021-04-09T22:50:15.301987-07:00',
-#                     'EventId': '6379acb5-0dfd-465e-bb03-58d9867e7591',
-#                     'EventData': {'SessionId': 'e3807981-3104-402a-ad71-8d42023c787d', 'RoomId': 1016219, 'ShortId': 0,
-#                                   'Name': '隐染啊', 'Title': '不要自闭挑战', 'AreaNameParent': '娱乐', 'AreaNameChild': '户外'}}
-#     video_json_list = [
-#         {'EventType': 'FileClosed', 'EventTimestamp': '2021-04-09T23:44:37.128312-07:00',
-#          'EventId': '114c0b8d-80a3-4d2e-81f5-9d1ba17f4acd',
-#          'EventData': {'RelativePath': '1016219-隐染啊/录制-1016219-20210409-234332-不要自闭挑战.flv', 'FileSize': 8488458,
-#                        'Duration': 63.646, 'FileOpenTime': '2021-04-09T23:43:32.456413-07:00',
-#                        'FileCloseTime': '2021-04-09T23:44:37.128288-07:00',
-#                        'SessionId': '22fa4a41-6e75-4ed6-8352-2a2449eeb252', 'RoomId': 1016219, 'ShortId': 0,
-#                        'Name': '隐染啊', 'Title': '不要自闭挑战', 'AreaNameParent': '娱乐', 'AreaNameChild': '户外'}},
-#         {'EventType': 'FileClosed', 'EventTimestamp': '2021-04-09T23:45:43.996789-07:00',
-#          'EventId': 'ff29a876-06c6-4007-8f4a-25da210ab043',
-#          'EventData': {'RelativePath': '1016219-隐染啊/录制-1016219-20210409-234437-不要自闭挑战.flv', 'FileSize': 8528472,
-#                        'Duration': 66.796, 'FileOpenTime': '2021-04-09T23:44:37.128482-07:00',
-#                        'FileCloseTime': '2021-04-09T23:45:43.996718-07:00',
-#                        'SessionId': '22fa4a41-6e75-4ed6-8352-2a2449eeb252', 'RoomId': 1016219, 'ShortId': 0,
-#                        'Name': '隐染啊', 'Title': '不要自闭挑战', 'AreaNameParent': '娱乐', 'AreaNameChild': '户外'}},
-#         {'EventType': 'FileClosed', 'EventTimestamp': '2021-04-09T23:46:50.169678-07:00',
-#          'EventId': '89d52da7-4cf4-46eb-84e3-be050c21f5f8',
-#          'EventData': {'RelativePath': '1016219-隐染啊/录制-1016219-20210409-234543-不要自闭挑战.flv', 'FileSize': 8665668,
-#                        'Duration': 66.923, 'FileOpenTime': '2021-04-09T23:45:43.997006-07:00',
-#                        'FileCloseTime': '2021-04-09T23:46:50.16964-07:00',
-#                        'SessionId': '22fa4a41-6e75-4ed6-8352-2a2449eeb252', 'RoomId': 1016219, 'ShortId': 0,
-#                        'Name': '隐染啊', 'Title': '不要自闭挑战', 'AreaNameParent': '娱乐', 'AreaNameChild': '户外'}},
-#         {'EventType': 'FileClosed', 'EventTimestamp': '2021-04-09T23:46:55.203116-07:00',
-#          'EventId': '39e1aff4-7d3d-45ec-a228-492244677353',
-#          'EventData': {'RelativePath': '1016219-隐染啊/录制-1016219-20210409-234650-不要自闭挑战.flv', 'FileSize': 993789,
-#                        'Duration': 7.463, 'FileOpenTime': '2021-04-09T23:46:50.16998-07:00',
-#                        'FileCloseTime': '2021-04-09T23:46:55.2031-07:00',
-#                        'SessionId': '22fa4a41-6e75-4ed6-8352-2a2449eeb252', 'RoomId': 1016219, 'ShortId': 0,
-#                        'Name': '隐染啊', 'Title': '不要自闭挑战', 'AreaNameParent': '娱乐', 'AreaNameChild': '户外'}}
-#     ]
-#     session = Session(session_json)
-#     video_tasks = []
-#     for video_json in video_json_list:
-#         video = Video(video_json)
-#         asyncio.run(session.add_video(video))
-#
-#     asyncio.run(session.gen_early_video())
-#     asyncio.run(session.gen_danmaku_video())
+
+if __name__ == '__main__':
+    BINARY_PATH = "../exes/"
+    session_json = {'EventType': 'SessionStarted', 'EventTimestamp': '2021-04-09T22:50:15.301987-07:00',
+                    'EventId': '6379acb5-0dfd-465e-bb03-58d9867e7591',
+                    'EventData': {'SessionId': 'e3807981-3104-402a-ad71-8d42023c787d', 'RoomId': 128308, 'ShortId': 0,
+                                  'Name': '隐染啊', 'Title': '不要自闭挑战', 'AreaNameParent': '娱乐', 'AreaNameChild': '户外'}}
+    filenames = ["128308-20210530-014105.flv", "128308-20210530-020536.flv", "128308-20210530-032330.flv"]
+    video_json_list = [
+        {'EventType': 'FileClosed', 'EventTimestamp': '2021-04-09T23:44:37.128312-07:00',
+         'EventId': '114c0b8d-80a3-4d2e-81f5-9d1ba17f4acd',
+         'EventData': {'RelativePath': f'128308/{filename}', 'FileSize': 128308,
+                       'Duration': 63.646, 'FileOpenTime': '2021-04-09T23:43:32.456413-07:00',
+                       'FileCloseTime': '2021-04-09T23:44:37.128288-07:00',
+                       'SessionId': '22fa4a41-6e75-4ed6-8352-2a2449eeb252', 'RoomId': 128308, 'ShortId': 0,
+                       'Name': '隐染啊', 'Title': '不要自闭挑战', 'AreaNameParent': '娱乐', 'AreaNameChild': '户外'}} for filename in filenames
+    ]
+    session = Session(session_json)
+    video_tasks = []
+    for video_json in video_json_list:
+        video = Video(video_json)
+        asyncio.run(session.add_video(video))
+
+    asyncio.run(session.gen_early_video())
+    asyncio.run(session.gen_danmaku_video())

@@ -11,6 +11,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y wget git apt-transport-https software-properties-common
 RUN add-apt-repository universe
 RUN apt-get update && apt-get install -y wget ffmpeg fonts-noto-color-emoji fonts-noto-cjk-extra cmake python3 python3-pip
+RUN update-ca-certificates -f
 
 RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
 RUN dpkg -i packages-microsoft-prod.deb
@@ -42,7 +43,7 @@ RUN make -f makefile_64
 
 #ENTRYPOINT /bin/bash
 
-RUN pip3 install git+https://github.com/valkjsaaa/danmaku_tools.git@0b2e7511ea44b1c8ac695311476fe130a8653994
+RUN pip3 install git+https://github.com/valkjsaaa/danmaku_tools.git@4e15a59c907e1927d031c06ad408382d6da6e448
 
 WORKDIR "/webhook"
 
