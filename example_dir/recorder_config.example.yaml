@@ -3,6 +3,7 @@ accounts:
     name: 测试录播bot                             # 录播账号的名字，可以用于模版
     username: "username"                         # 账号，可以是手机号
     password: "PaSsWoRd"                         # 密码
+    login_proxy: "https://123.45.67.89:1234"     # 代理地址
 rooms:
   - id: 128308                                   # 需要上传的直播间 ID，请填写完整号码，而不是短号，否则可能不会上传
     uploader: test_bot                           # 上传所应使用的账号
