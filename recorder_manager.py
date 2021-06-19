@@ -10,6 +10,8 @@ def spawn_recorder(room):
         f"-d 63 " \
         f"--webhook-url " \
         f'"http://127.0.0.1:10261/process_video" ' \
+        f'--filename-format ' \
+        '{roomid}/{date}/{roomid}-{date}-{time}-{ms}.flv ' \
         f'/storage/ ' \
         f'{room} '
     print(f"swawn recorder for {room}: {spawn_command}")
