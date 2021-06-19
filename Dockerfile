@@ -22,7 +22,7 @@ RUN if [[ ${COMMON_IMAGE} == *"cuda"* ]] ; then ln -s /usr/local/cuda/lib64/stub
 
 RUN ln -s /usr/bin/pwsh /usr/bin/powershell
 
-RUN git clone https://github.com/valkjsaaa/BililiveRecorder.git && cd BililiveRecorder && git checkout e5bbb8f8aa384368a230470949a44a41f033bcf9
+RUN git clone https://github.com/valkjsaaa/BililiveRecorder.git && cd BililiveRecorder && git checkout 7bbef299529d46737c8e95424d4f56423d02bf74
 
 WORKDIR "/BililiveRecorder"
 
