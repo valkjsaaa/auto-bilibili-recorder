@@ -11,7 +11,7 @@ class UploaderAccount:
     password: str
     sessdata: str
     bili_jct: str
-    proxy_url: str
+    login_proxy: str
     access_token: str
     verify: Verify
 
@@ -22,7 +22,8 @@ class UploaderAccount:
 
     def login(self):
         b = Bilibili()
-        b.set_proxy(add=self.proxy_url)
+        if hasattr(self, "login_proxy"):
+            b.set_proxy(add=self.login_proxy)
         b.login(username=self.username, password=self.password)
         self.access_token = b.access_token
         self.sessdata = b._session.cookies['SESSDATA']
