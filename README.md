@@ -9,11 +9,12 @@ Bilibili 全自动录播上传脚本
 * 自动根据弹幕和礼物密度检测直播高能区域
 * 压制带有高能进度条，弹幕的视频（部分 Nvidia GPU 支持 nvenc 加速）
 * 自动用换源方法更新高能弹幕版的视频
-* （新）生成并上传醒目留言字幕
-* （新）边录边修大部分录播数据流格式问题（来自 B站录播姬 v1.3)
-* （新）主播意外下播，很快重新上播时会自动拼接
-* （新）只需要一个配置文件
-* （新）高能路牌自动提取最相关的弹幕
+* 生成并上传醒目留言字幕
+* 边录边修大部分录播数据流格式问题（来自 B站录播姬 v1.3)
+* 主播意外下播，很快重新上播时会自动拼接
+* 只需要一个配置文件
+* 高能路牌自动提取最相关的弹幕
+* （新）登录时可以指定 HTTP 代理以解决部分 IP 地址无法自动登录的问题
 
 ### 例子
 
@@ -51,7 +52,9 @@ ${录制目标文件夹}
 使用 docker 运行脚本：
 
 1. 安装 docker （已经安装的跳过这一步）：https://docs.docker.com/get-docker/
+
    如果想使用 GPU 加速的话，还需要[安装 NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#setting-up-nvidia-container-toolkit)
+
    例如，如果是 Ubuntu/Debian 的话，需要：
    ```bash
    distribution=$(. /etc/os-release;echo $ID$VERSION_ID) \
@@ -73,7 +76,7 @@ ${录制目标文件夹}
 
    有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder-gpu:3.9`
 
-3. 停止录播：
+3. 立即停止录播（会中断正在录制/转码/上传的录播）：
 
    `sudo docker rm -f auto-bilibili-recorder`
 
