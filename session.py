@@ -187,13 +187,29 @@ class Session:
                 self.output_path()['video_log']
             )
 
+    def get_resolution(self):
+        video_res_sorted = list(reversed([
+            (video.video_resolution_x / video.video_resolution_y,
+             video.video_resolution_x,
+             video.video_resolution_y)
+            for video in self.videos
+        ]))  # prioritize wider, higher-res format
+        video_res_x = video_res_sorted[0][1]
+        video_res_y = video_res_sorted[0][2]
+        return video_res_x, video_res_y
+
     async def process_danmaku(self):
+        video_res_x, video_res_y = self.get_resolution()
+        font_size = max(video_res_x, video_res_y) * 50 // 1920
+        print(f"font_size: {font_size}")
         danmaku_conversion_command = \
             f"{BINARY_PATH}DanmakuFactory/DanmakuFactory " \
+            f"-x {video_res_x} " \
+            f"-y {video_res_y} " \
             f"--ignore-warnings " \
             f"-o \"{self.output_path()['ass']}\" " \
             f"-i \"{self.output_path()['xml']}\" " \
-            f"--fontname \"Noto Sans CJK SC\" -S 50 " \
+            f"--fontname \"Noto Sans CJK SC\" -S {font_size} -O 255 " \
             f">> \"{self.output_path()['extras_log']}\" 2>&1"
         await async_wait_output(danmaku_conversion_command)
 
@@ -223,14 +239,7 @@ class Session:
         video_bitrate = (max_size / total_time - audio_bitrate) - 500  # just to be safe
         max_video_bitrate = float(8000)  # BiliBili now re-encode every video anyways
         video_bitrate = int(min(max_video_bitrate, video_bitrate))
-        video_res_sorted = list(reversed([
-            (video.video_resolution_x/video.video_resolution_y,
-             video.video_resolution_x,
-             video.video_resolution_y)
-            for video in self.videos
-        ]))  # prioritize wider, higher-res format
-        video_res_x = video_res_sorted[0][1]
-        video_res_y = video_res_sorted[0][2]
+        video_res_x, video_res_y = self.get_resolution()
         ffmpeg_command = f'''ffmpeg -y -loop 1 -t {total_time} \
         -i "{self.output_path()['he_graph']}" \
         -f concat \
