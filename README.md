@@ -15,6 +15,7 @@ Bilibili 全自动录播上传脚本
 * 只需要一个配置文件
 * 高能路牌自动提取最相关的弹幕
 * （新）登录时可以指定 HTTP 代理以解决部分 IP 地址无法自动登录的问题
+* （新）当主播切换分辨率的时候自动使用更宽、更高清的分辨率
 
 ### 例子
 
@@ -72,9 +73,9 @@ ${录制目标文件夹}
    
 2. 运行 docker 镜像：
 
-   无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:3.9`
+   无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:3.10`
 
-   有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder-gpu:3.9`
+   有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder-gpu:3.10`
 
 3. 立即停止录播（会中断正在录制/转码/上传的录播）：
 

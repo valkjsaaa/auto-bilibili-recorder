@@ -33,6 +33,8 @@ class Video:
     video_length: float
     room_id: int
     video_resolution: str
+    video_resolution_x: int
+    video_resolution_y: int
     video_length_flv: float
 
     def __init__(self, file_closed_event_json):
@@ -64,6 +66,8 @@ class Video:
         )
         self.video_length_flv = float(video_length_str[0].decode('utf-8').strip())
         self.video_resolution = str(video_resolution_str[0].decode('utf-8').strip())
+        video_resolutions = self.video_resolution.split("x")
+        self.video_resolution_x, self.video_resolution_y = int(video_resolutions[0]), int(video_resolutions[1])
 
 
 class Session:
@@ -219,6 +223,14 @@ class Session:
         video_bitrate = (max_size / total_time - audio_bitrate) - 500  # just to be safe
         max_video_bitrate = float(8000)  # BiliBili now re-encode every video anyways
         video_bitrate = int(min(max_video_bitrate, video_bitrate))
+        video_res_sorted = list(reversed([
+            (video.video_resolution_x/video.video_resolution_y,
+             video.video_resolution_x,
+             video.video_resolution_y)
+            for video in self.videos
+        ]))  # prioritize wider, higher-res format
+        video_res_x = video_res_sorted[0][1]
+        video_res_y = video_res_sorted[0][2]
         ffmpeg_command = f'''ffmpeg -y -loop 1 -t {total_time} \
         -i "{self.output_path()['he_graph']}" \
         -f concat \
@@ -226,7 +238,8 @@ class Session:
         -i "{self.output_path()['concat_file']}" \
         -t {total_time} \
         -filter_complex "
-        [0:v][1:v]scale2ref=iw:iw*(main_h/main_w)[color][ref];
+        [1:v]scale={video_res_x}:{video_res_y}:force_original_aspect_ratio=decrease,pad={video_res_x}:{video_res_y}:-1:-1:color=black[v_fixed];
+        [0:v][v_fixed]scale2ref=iw:iw*(main_h/main_w)[color][ref];
         [color]split[color1][color2];
         [color1]hue=s=0[gray];
         [color2]negate=negate_alpha=1[color_neg];
