@@ -39,7 +39,7 @@ class Video:
 
     def __init__(self, file_closed_event_json):
         flv_name = file_closed_event_json['EventData']['RelativePath']
-        self.base_path = flv_name.rpartition('.')[0]
+        self.base_path = os.path.abspath(flv_name.rpartition('.')[0])
         self.session_id = file_closed_event_json["EventData"]["SessionId"]
         self.room_id = file_closed_event_json["EventData"]["RoomId"]
         self.video_length = file_closed_event_json["EventData"]["Duration"]
@@ -165,7 +165,7 @@ class Session:
             self.he_time = float(he_time_str)
 
     def generate_concat(self):
-        concat_text = "\n".join([f"file '{os.path.basename(video.flv_file_path())}'" for video in self.videos])
+        concat_text = "\n".join([f"file '{video.flv_file_path()}'" for video in self.videos])
         with open(self.output_path()['concat_file'], 'w') as concat_file:
             concat_file.write(concat_text)
 
