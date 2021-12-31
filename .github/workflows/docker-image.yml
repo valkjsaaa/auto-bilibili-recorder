@@ -12,7 +12,6 @@ env:
 jobs:
 
   build_docker:
-    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read
