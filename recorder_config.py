@@ -24,10 +24,13 @@ class UploaderAccount:
         b = Bilibili()
         if hasattr(self, "login_proxy"):
             b.set_proxy(add=self.login_proxy)
-        b.login(username=self.username, password=self.password)
         self.access_token = b.access_token
-        self.sessdata = b._session.cookies['SESSDATA']
-        self.bili_jct = b._session.cookies['bili_jct']
+        if hasattr(self, "sessdata") and hasattr(self, "bili_jct"):
+            pass
+        else:
+            b.login(username=self.username, password=self.password)
+            self.sessdata = b._session.cookies['SESSDATA']
+            self.bili_jct = b._session.cookies['bili_jct']
         print(f"login successfully! {self.name} {self.access_token} {self.sessdata} {self.bili_jct}")
         self.verify = Verify(sessdata=self.sessdata, csrf=self.bili_jct)
 
