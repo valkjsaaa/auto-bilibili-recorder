@@ -26,7 +26,7 @@ Bilibili 全自动录播上传脚本
 
 文件夹设置：
 1. 建一个空文件夹
-2. 放入 `recorder_config.yaml` ，可以根据 [`recorder_config.example.yaml`](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/example_dir/recorder_config.example.yaml) 改。
+2. 放入 `recorder_config.yaml`。
 
 
 文件夹设置完的目录结构如下：
@@ -74,9 +74,13 @@ ${录制目标文件夹}
    
 2. 运行 docker 镜像：
 
-   无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:3.14`
+   x64 无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:3.17`
 
-   有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder-gpu:3.14`
+   x64 有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder-gpu:3.17`
+
+   arm64: `sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder-arm64:3.17`
+
+   armv7: `sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder-armv7:3.17`
 
 3. 立即停止录播（会中断正在录制/转码/上传的录播）：
 
@@ -85,6 +89,16 @@ ${录制目标文件夹}
 
 *使用请注明脚本来自 [@熊卡录播 bot](https://space.bilibili.com/1576916333)*
    
+### 配置文件 `recorder_config.yaml` 例子 
+
+[简单录播账号](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/example_dir/recorder_config.uploader.yaml)
+
+[只录播，不上传](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/example_dir/recorder_config.record_only.yaml)
+
+[多个直播间，多个账号](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/example_dir/recorder_config.multi_uploader.yaml)
+
+[用户名密码登陆，使用代理（目前暂时不可用）](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/example_dir/recorder_config.password_proxy.yaml)
+
 
 ### 测试过的环境
 
