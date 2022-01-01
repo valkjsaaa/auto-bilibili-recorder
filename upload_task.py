@@ -1,6 +1,6 @@
 import os.path
 
-from bilibili_api.video import video_upload, video_cover_upload, video_submit, get_video_info, video_update_app
+from bilibili_api.video import video_upload, video_cover_upload, video_submit, get_video_info, video_update
 
 from recorder_config import UploaderAccount
 
@@ -99,6 +99,6 @@ class UploadTask:
                 "handle_staff": False,
                 'bvid': v["archive"]["bvid"]
             }
-            result = video_update_app(data, self.verify, self.account.access_token)
+            result = video_update(data, self.verify)
             print(f"{data['title']} updated: {result}")
             return result['bvid']
