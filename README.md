@@ -74,13 +74,9 @@ ${录制目标文件夹}
    
 2. 运行 docker 镜像：
 
-   x64 无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder:3.17`
+   x64/arm64 无 GPU：`sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage ghcr.io/valkjsaaa/auto-bilibili-recorder:master`
 
-   x64 有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder-gpu:3.17`
-
-   arm64: `sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder-arm64:3.17`
-
-   armv7: `sudo docker run -d --restart=always --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage valkjsaaa/auto-bilibili-recorder-armv7:3.17`
+   x64 有 GPU：`sudo docker run -d --restart=always --gpus all -e NVIDIA_DRIVER_CAPABILITIES=video,compute,utility --name auto-bilibili-recorder -v ${录制目标文件夹}:/storage ghcr.io/valkjsaaa/auto-bilibili-recorder-gpu:master`
 
 3. 立即停止录播（会中断正在录制/转码/上传的录播）：
 
