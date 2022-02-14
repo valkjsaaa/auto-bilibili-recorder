@@ -50,12 +50,12 @@ RUN rm -rf /root/.dotnet
 
 WORKDIR "/"
 
-RUN git clone https://github.com/valkjsaaa/DanmakuFactory.git && cd DanmakuFactory && git checkout 8d376672da6346dd9da91738d9b6232d5d9a37cf
+RUN git clone https://github.com/hihkm/DanmakuFactory.git && cd DanmakuFactory && git checkout cab7cf813e5322ec3f41431fcae330a800d457a3
 
 WORKDIR "/DanmakuFactory"
 
 RUN mkdir temp
-RUN make -f makefile_64
+RUN make -f makefile
 
 #ENTRYPOINT /bin/bash
 
@@ -63,11 +63,12 @@ RUN pip3 install git+https://github.com/valkjsaaa/danmaku_tools.git@4e15a59c907e
 
 WORKDIR "/webhook"
 
-COPY *.py .
 COPY requirements.txt .
 RUN pip3 install --upgrade -r requirements.txt
 RUN wget https://raw.githubusercontent.com/valkjsaaa/Bilibili-Toolkit/7b86a61214149cc3f790d02d5d06ecd7540b9bdb/bilibili.py
 
+COPY *.py .
 
 WORKDIR "/storage"
+ENV PYTHONUNBUFFERED=1
 CMD python3 -u /webhook/process_video.py
