@@ -59,7 +59,7 @@ RUN make -f makefile
 
 #ENTRYPOINT /bin/bash
 
-RUN pip3 install git+https://github.com/valkjsaaa/danmaku_tools.git@4e15a59c907e1927d031c06ad408382d6da6e448
+RUN pip3 install git+https://github.com/valkjsaaa/danmaku_tools.git@4472ac4207ae08e9fa76f884e726f23631e2b003
 
 WORKDIR "/webhook"
 

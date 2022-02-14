@@ -123,6 +123,7 @@ class Session:
     def output_path(self):
         return {
             "xml": self.output_base_path() + ".xml",
+            "clean_xml": self.output_base_path() + ".clean.xml",
             "ass": self.output_base_path() + ".ass",
             "early_video": self.output_base_path() + ".flv",
             "danmaku_video": self.output_base_path() + ".bar.mp4",
@@ -148,6 +149,14 @@ class Session:
             f">> \"{self.output_path()['extras_log']}\" 2>&1"
         await async_wait_output(danmaku_merge_command)
 
+    async def clean_xml(self):
+        danmaku_clean_command = \
+            f"python3 -m danmaku_tools.clean_danmaku " \
+            f"{self.output_path()['xml']} " \
+            f"--output \"{self.output_path()['clean_xml']}\" " \
+            f">> \"{self.output_path()['extras_log']}\" 2>&1"
+        await async_wait_output(danmaku_clean_command)
+
     async def process_xml(self):
         danmaku_extras_command = \
             f"python3 -m danmaku_tools.danmaku_energy_map " \
@@ -157,7 +166,7 @@ class Session:
             f"--he_time \"{self.output_path()['he_pos']}\" " \
             f"--sc_srt \"{self.output_path()['sc_srt']}\" " \
             f"--he_range \"{self.output_path()['he_range']}\" " \
-            f"\"{self.output_path()['xml']}\" " \
+            f"\"{self.output_path()['clean_xml']}\" " \
             f">> \"{self.output_path()['extras_log']}\" 2>&1"
         await async_wait_output(danmaku_extras_command)
         with open(self.output_path()['he_pos'], 'r') as file:
@@ -208,7 +217,7 @@ class Session:
             f"-y {video_res_y} " \
             f"--ignore-warnings " \
             f"-o \"{self.output_path()['ass']}\" " \
-            f"-i \"{self.output_path()['xml']}\" " \
+            f"-i \"{self.output_path()['clean_xml']}\" " \
             f"--fontname \"Noto Sans CJK SC\" -S {font_size} -O 255 -L 1 -D 1 --showusernames true" \
             f">> \"{self.output_path()['extras_log']}\" 2>&1"
         await async_wait_output(danmaku_conversion_command)
@@ -275,6 +284,7 @@ class Session:
             print(f"No video in session for {self.room_id}@{self.start_time}, skip!")
             return
         await self.merge_xml()
+        await self.clean_xml()
         await self.process_xml()
         await self.process_danmaku()
         await self.process_thumbnail()
