@@ -61,6 +61,13 @@ RUN make -f makefile
 
 RUN pip3 install git+https://github.com/valkjsaaa/danmaku_tools.git@4472ac4207ae08e9fa76f884e726f23631e2b003
 
+WORKDIR "/usr/local/bin"
+
+RUN wget https://raw.githubusercontent.com/keylase/nvidia-patch/e87985e03ac2cf9b8e8086aa4b33a140f46fe036/patch.sh && \
+    wget https://raw.githubusercontent.com/keylase/nvidia-patch/e87985e03ac2cf9b8e8086aa4b33a140f46fe036/docker-entrypoint.sh && \
+    chmod +x patch.sh && \
+    chmod +x docker-entrypoint.sh
+
 WORKDIR "/webhook"
 
 COPY requirements.txt .
@@ -71,4 +78,4 @@ COPY *.py .
 
 WORKDIR "/storage"
 ENV PYTHONUNBUFFERED=1
-CMD python3 -u /webhook/process_video.py
+CMD /usr/local/bin/docker-entrypoint.sh python3 -u /webhook/process_video.py
