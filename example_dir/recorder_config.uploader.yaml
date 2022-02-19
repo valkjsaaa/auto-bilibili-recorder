@@ -1,6 +1,7 @@
 accounts:
   test_bot:                                     # 录播账号 ID 用来在房间里对应
     name: 熊卡录播bot                             # 录播账号的名字，可以用于模版
+    # sessdata 和 bili_jct 获取见：https://bili.moyu.moe/#/get-credential
     sessdata: "sessdata"                         # SESSDATA cookie
     bili_jct: "bili_jct"                         # bili_jct cookie
 rooms:
