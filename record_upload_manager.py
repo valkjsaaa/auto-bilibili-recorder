@@ -156,18 +156,12 @@ class RecordUploadManager:
             finally:
                 time.sleep(60)
 
-    async def upload_video(self, session):
+    async def upload_video(self, session: Session):
         await asyncio.sleep(WAIT_BEFORE_SESSION_MINUTES * 60)
         if len(session.videos) == 0:
             print(f"No video in session: {session.room_id}@{session.session_id}")
             return
-        room_config = None
-        for room in self.config.rooms:
-            if room.id == session.room_id:
-                room_config = room
-        if room_config is None:
-            print(f"Cannot find room config for {session.room_id}!")
-            return
+        room_config = session.room_config
         if room_config.uploader is None:
             print(f"No need to upload for {room_config.id}")
             await session.gen_early_video()
@@ -249,6 +243,13 @@ class RecordUploadManager:
         room_id = update_json["EventData"]["RoomId"]
         session_id = update_json["EventData"]["SessionId"]
         event_timestamp = dateutil.parser.isoparse(update_json["EventTimestamp"])
+        room_config = None
+        for room in self.config.rooms:
+            if room.id == room_id:
+                room_config = room
+        if room_config is None:
+            print(f"Cannot find room config for {room_id}!")
+            return
         if update_json["EventType"] == "SessionStarted":
             for session in self.sessions.values():
                 if session.room_id == room_id and \
@@ -257,7 +258,7 @@ class RecordUploadManager:
                     if session.upload_task is not None:
                         session.upload_task.cancel()
                     return
-            self.sessions[session_id] = Session(update_json)
+            self.sessions[session_id] = Session(update_json, room_config=room_config)
         else:
             if session_id not in self.sessions:
                 print(f"Cannot find {room_id}/{session_id} for: {update_json}")

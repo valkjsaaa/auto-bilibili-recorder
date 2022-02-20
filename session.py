@@ -11,6 +11,7 @@ import dateutil.parser
 from gpuinfo import GPUInfo
 
 from commons import BINARY_PATH
+from recorder_config import RecoderRoom
 
 
 async def async_wait_output(command):
@@ -83,8 +84,13 @@ class Session:
     early_video_path: Optional[str]
     room_name: str
     room_title: str
+    room_config: RecoderRoom
 
-    def __init__(self, session_start_event_json, notify_length=60):
+    def __init__(self, session_start_event_json, notify_length=60, room_config=None):
+        if room_config is None:
+            self.room_config = RecoderRoom({})
+        else:
+            self.room_config = room_config
         self.start_time = dateutil.parser.isoparse(session_start_event_json["EventTimestamp"])
         self.session_id = session_start_event_json["EventData"]["SessionId"]
         self.room_id = session_start_event_json["EventData"]["RoomId"]
@@ -165,7 +171,15 @@ class Session:
             f"--sc_list \"{self.output_path()['sc_file']}\" " \
             f"--he_time \"{self.output_path()['he_pos']}\" " \
             f"--sc_srt \"{self.output_path()['sc_srt']}\" " \
-            f"--he_range \"{self.output_path()['he_range']}\" " \
+            f"--he_range \"{self.output_path()['he_range']}\" " + \
+            (
+                f"--user_dict \"{self.room_config.he_user_dict}\" "
+                if self.room_config.he_user_dict is not None else ""
+            ) + \
+            (
+                f"--regex_rules \"{self.room_config.he_regex_rules}\" "
+                if self.room_config.he_regex_rules is not None else ""
+            ) + \
             f"\"{self.output_path()['clean_xml']}\" " \
             f">> \"{self.output_path()['extras_log']}\" 2>&1"
         await async_wait_output(danmaku_extras_command)
