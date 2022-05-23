@@ -24,12 +24,11 @@ def segment_text(text):
     for line in lines:
         if len(new_segment) + len(line) < TEXT_LIMIT:
             new_segment += line + "\n"
+        elif len(line) > TEXT_LIMIT:
+            print(f"line\"{line}\" too long, omit.")
         else:
-            if len(line) > TEXT_LIMIT:
-                print(f"line\"{line}\" too long, omit.")
-            else:
-                new_text += new_segment + SEG_CHAR
-                new_segment = line + "\n"
+            new_text += new_segment + SEG_CHAR
+            new_segment = line + "\n"
     new_text += new_segment
     return new_text
 
@@ -81,8 +80,12 @@ class CommentTask:
 
     @staticmethod
     def from_upload_task(upload_task: UploadTask) -> 'CommentTask':
-        comment_task = CommentTask(upload_task.sc_path, upload_task.he_path, upload_task.session_id, upload_task.verify)
-        return comment_task
+        return CommentTask(
+            upload_task.sc_path,
+            upload_task.he_path,
+            upload_task.session_id,
+            upload_task.verify,
+        )
 
     def post_comment(self, session_dict: {str: str}) -> bool:
         if (datetime.datetime.now(datetime.timezone.utc) - self.start_date).total_seconds() / 60 / 60 > HOURS_THRESHOLD:

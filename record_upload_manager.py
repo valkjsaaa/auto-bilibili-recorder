@@ -38,7 +38,7 @@ class RecordUploadManager:
             self.save = TaskSave()
             self.save_progress()
         self.recorder_manager = RecorderManager([room.id for room in self.config.rooms])
-        self.sessions: {str: Session} = dict()
+        self.sessions: {str: Session} = {}
         self.video_upload_queue: Queue[UploadTask] = Queue()
         self.comment_post_queue: Queue[CommentTask] = Queue()
         self.subtitle_post_queue: Queue[SubtitleTask] = Queue()

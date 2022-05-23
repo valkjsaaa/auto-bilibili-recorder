@@ -25,9 +25,7 @@ class UploaderAccount:
         if hasattr(self, "login_proxy"):
             b.set_proxy(add=self.login_proxy)
         self.access_token = b.access_token
-        if hasattr(self, "sessdata") and hasattr(self, "bili_jct"):
-            pass
-        else:
+        if not hasattr(self, "sessdata") or not hasattr(self, "bili_jct"):
             b.login(username=self.username, password=self.password)
             self.sessdata = b._session.cookies['SESSDATA']
             self.bili_jct = b._session.cookies['bili_jct']

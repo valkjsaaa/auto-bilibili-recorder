@@ -46,10 +46,10 @@ class Video:
         self.video_length = file_closed_event_json["EventData"]["Duration"]
 
     def flv_file_path(self):
-        return self.base_path + ".flv"
+        return f"{self.base_path}.flv"
 
     def xml_file_path(self):
-        return self.base_path + ".xml"
+        return f"{self.base_path}.xml"
 
     async def gen_thumbnail(self, he_time, png_file_path, video_log_path):
         ffmpeg_command_img = f"ffmpeg -y -ss {he_time} -i \"{self.flv_file_path()}\" -vframes 1 \"{png_file_path}\"" \
@@ -87,10 +87,7 @@ class Session:
     room_config: RecoderRoom
 
     def __init__(self, session_start_event_json, notify_length=60, room_config=None):
-        if room_config is None:
-            self.room_config = RecoderRoom({})
-        else:
-            self.room_config = room_config
+        self.room_config = RecoderRoom({}) if room_config is None else room_config
         self.start_time = dateutil.parser.isoparse(session_start_event_json["EventTimestamp"])
         self.session_id = session_start_event_json["EventData"]["SessionId"]
         self.room_id = session_start_event_json["EventData"]["RoomId"]
@@ -124,25 +121,25 @@ class Session:
         self.total_length += new_length
 
     def output_base_path(self):
-        return self.videos[0].base_path + ".all"
+        return f"{self.videos[0].base_path}.all"
 
     def output_path(self):
         return {
-            "xml": self.output_base_path() + ".xml",
-            "clean_xml": self.output_base_path() + ".clean.xml",
-            "ass": self.output_base_path() + ".ass",
-            "early_video": self.output_base_path() + ".flv",
-            "danmaku_video": self.output_base_path() + ".bar.mp4",
-            "concat_file": self.output_base_path() + ".concat.txt",
-            "thumbnail": self.output_base_path() + ".thumb.png",
-            "he_graph": self.output_base_path() + ".he.png",
-            "he_file": self.output_base_path() + ".he.txt",
-            "he_range": self.output_base_path() + ".he_range.txt",
-            "sc_file": self.output_base_path() + ".sc.txt",
-            "sc_srt": self.output_base_path() + ".sc.srt",
-            "he_pos": self.output_base_path() + ".he_pos.txt",
-            "extras_log": self.output_base_path() + ".extras.log",
-            "video_log": self.output_base_path() + ".video.log",
+            "xml": f"{self.output_base_path()}.xml",
+            "clean_xml": f"{self.output_base_path()}.clean.xml",
+            "ass": f"{self.output_base_path()}.ass",
+            "early_video": f"{self.output_base_path()}.flv",
+            "danmaku_video": f"{self.output_base_path()}.bar.mp4",
+            "concat_file": f"{self.output_base_path()}.concat.txt",
+            "thumbnail": f"{self.output_base_path()}.thumb.png",
+            "he_graph": f"{self.output_base_path()}.he.png",
+            "he_file": f"{self.output_base_path()}.he.txt",
+            "he_range": f"{self.output_base_path()}.he_range.txt",
+            "sc_file": f"{self.output_base_path()}.sc.txt",
+            "sc_srt": f"{self.output_base_path()}.sc.srt",
+            "he_pos": f"{self.output_base_path()}.he_pos.txt",
+            "extras_log": f"{self.output_base_path()}.extras.log",
+            "video_log": f"{self.output_base_path()}.video.log",
         }
 
     async def merge_xml(self):
@@ -239,12 +236,11 @@ class Session:
     async def process_early_video(self):
         if len(self.videos) == 1:
             self.early_video_path = self.videos[0].flv_file_path
-        format_check = True
         ref_video_res = self.videos[0].video_resolution
-        for video in self.videos:
-            if video.video_resolution != ref_video_res:
-                format_check = False
-                break
+        format_check = all(
+            video.video_resolution == ref_video_res for video in self.videos
+        )
+
         if not format_check:
             return
         ffmpeg_command = f'''ffmpeg -y \
@@ -256,7 +252,7 @@ class Session:
         self.early_video_path = self.output_path()['early_video']
 
     async def process_video(self):
-        total_time = sum([video.video_length_flv for video in self.videos])
+        total_time = sum(video.video_length_flv for video in self.videos)
         max_size = 8000_000 * 8  # Kb
         audio_bitrate = 320
         video_bitrate = (max_size / total_time - audio_bitrate) - 500  # just to be safe

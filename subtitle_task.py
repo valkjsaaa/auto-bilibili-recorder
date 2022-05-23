@@ -40,8 +40,7 @@ class SubtitleTask:
 
     @staticmethod
     def from_upload_task(upload_task: UploadTask, bvid: str, cid: int) -> 'SubtitleTask':
-        comment_task = SubtitleTask(upload_task.subtitle_path, bvid, cid, upload_task.verify)
-        return comment_task
+        return SubtitleTask(upload_task.subtitle_path, bvid, cid, upload_task.verify)
 
     def is_earlier_task_of(self, new_task: 'SubtitleTask'):
         return new_task.bvid == self.bvid and new_task.start_date > self.start_date
@@ -83,12 +82,11 @@ class SubtitleTask:
             video.save_subtitle(srt_json_str, bvid=self.bvid, cid=self.cid, verify=verify)
         except bilibili_api.exceptions.BilibiliApiException as e:
             # noinspection PyUnresolvedReferences
-            if hasattr(e, 'code') and (e.code == 79022 or e.code == -404 or e.code == 502):  # video not approved yet
+            if hasattr(e, 'code') and e.code in [79022, -404, 502]:  # video not approved yet
                 self.error_count -= 1
-                return False
             else:
                 print(traceback.format_exc())
-                return False
+            return False
         return True
 
 
