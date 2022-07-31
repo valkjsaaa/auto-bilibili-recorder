@@ -2,10 +2,11 @@ Flask==1.1.2
 PyYAML==5.4.1
 python-dateutil~=2.8.1
 gpuinfo~=1.0.0a7
-git+https://github.com/valkjsaaa/bilibili_api.git@7148fceba944c4a422f8c15e3758eb0933a4419f
+git+https://github.com/valkjsaaa/bilibili_api.git@9f046e09c2240f6fbf33dbaa5dbd3936a48b6699
 Quart~=0.14.1
 srt~=3.4.1
 chardet~=4.0.0
 requests~=2.25.1
 rsa~=4.5
 toml~=0.10.2
+stream-gears~=0.1.10

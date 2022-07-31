@@ -31,7 +31,7 @@ class UploadTask:
         def on_progress(update):
             print(update)
 
-        filename = video_upload(self.video_path, verify=self.verify, on_progress=on_progress)
+        filename = video_upload(self.video_path, verify=self.verify, on_progress=on_progress, server='cos')
         if self.danmaku:
             suffix = "弹幕高能版"
         else:
