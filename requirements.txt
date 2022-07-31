@@ -9,4 +9,3 @@ chardet~=4.0.0
 requests~=2.25.1
 rsa~=4.5
 toml~=0.10.2
-stream-gears~=0.1.10
