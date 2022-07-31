@@ -1,7 +1,7 @@
 # Auto bilibili live recording server
 #
 # VERSION               0.0.1
-ARG COMMON_IMAGE=nvidia/cuda:11.7.0-devel-ubuntu20.04
+ARG COMMON_IMAGE=nvidia/cuda:11.0.3-devel-ubuntu20.04
 FROM ${COMMON_IMAGE}
 
 ENV TZ=Asia/Shanghai
