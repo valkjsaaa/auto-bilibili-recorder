@@ -5,7 +5,7 @@ from commons import BINARY_PATH
 
 def spawn_recorder(room):
     spawn_command = \
-        f"{BINARY_PATH}BililiveRecorder/BililiveRecorder.Cli/bin/Release/net5.0/BililiveRecorder.Cli " \
+        f"{BINARY_PATH}BililiveRecorder/BililiveRecorder.Cli/bin/Release/net6.0/BililiveRecorder.Cli " \
         f"portable " \
         f"-d 63 " \
         f"--webhook-url " \
