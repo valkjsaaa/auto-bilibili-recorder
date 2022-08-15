@@ -20,7 +20,7 @@ RUN mkdir -p /opt/pwsh
 RUN tar -xvzf powershell.tar.gz -C /opt/pwsh
 
 RUN wget https://dot.net/v1/dotnet-install.sh
-RUN bash ./dotnet-install.sh -c 5.0
+RUN bash ./dotnet-install.sh -c 6.0
 
 RUN if [[ ${COMMON_IMAGE} == *"cuda"* ]] ; then ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 ; fi
 
