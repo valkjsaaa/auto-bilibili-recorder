@@ -38,7 +38,7 @@ RUN dpkgArch="$(uname -m)"; \
         *) export RID='linux-x64' ;; \
     esac; \
     dotnet build BililiveRecorder.Cli/BililiveRecorder.Cli.csproj -r $RID -c Release -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=True -p:TrimMode=Link &&\
-    ln -s /BililiveRecorder/BililiveRecorder.Cli/bin/Release/net5.0/$RID/BililiveRecorder.Cli /BililiveRecorder/BililiveRecorder.Cli/bin/Release/net5.0/
+    ln -s /BililiveRecorder/BililiveRecorder.Cli/bin/Release/net6.0/$RID/BililiveRecorder.Cli /BililiveRecorder/BililiveRecorder.Cli/bin/Release/net6.0/
 
 
 RUN dotnet nuget locals all --clear
