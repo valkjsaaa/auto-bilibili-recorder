@@ -11,7 +11,7 @@ def spawn_recorder(room):
         f"--webhook-url " \
         f'"http://127.0.0.1:10261/process_video" ' \
         f'--filename ' \
-        '"{{roomId}}/{{ \"now\" | time_zone: \"Asia/Shanghai\" | format_date: \"yyyyMMdd\" }}/{roomId}-{{ "now" | time_zone: \"Asia/Shanghai\" | format_date: \"yyyyMMdd-HHmmss-fff\" }}.flv" '\
+        '"{{roomId}}/{{ \"now\" | time_zone: \"Asia/Shanghai\" | format_date: \"yyyyMMdd\" }}/{{roomId}}-{{ "now" | time_zone: \"Asia/Shanghai\" | format_date: \"yyyyMMdd-HHmmss-fff\" }}.flv" '\
         f'/storage/ ' \
         f'{room} '
     print(f"swawn recorder for {room}: {spawn_command}")
