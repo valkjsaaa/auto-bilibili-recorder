@@ -240,6 +240,15 @@ class RecordUploadManager:
             )
 
     async def handle_update(self, update_json: dict):
+        if update_json["EventType"] not in [
+            "SessionStarted",
+            "FileOpening",
+            "FileClosed",
+            "SessionEnded",
+        ]:
+            print(f"无关事件: {update_json}")
+            return
+
         room_id = update_json["EventData"]["RoomId"]
         session_id = update_json["EventData"]["SessionId"]
         event_timestamp = dateutil.parser.isoparse(update_json["EventTimestamp"])

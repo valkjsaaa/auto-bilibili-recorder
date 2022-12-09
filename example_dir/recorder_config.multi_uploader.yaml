@@ -3,10 +3,12 @@ accounts:
     name: 测试录播bot1                            # 录播账号的名字，可以用于模版
     sessdata: "sessdata"                         # SESSDATA cookie
     bili_jct: "bili_jct"                         # bili_jct cookie
+    line: "kodo"                                 # 选择上传线路，见 https://biliup.github.io/upload-systems-analysis.html
   test_bot_2:
     name: 测试录播bot2                            # 录播账号的名字，可以用于模版
     sessdata: "sessdata"                         # SESSDATA cookie
     bili_jct: "bili_jct"                         # bili_jct cookie
+    # 留空则自动选择，建议尽量手动选择
 rooms:
   - id: 128308                                   # 需要上传的直播间 ID，请填写完整号码，而不是短号，否则可能不会上传
     uploader: test_bot1                           # 上传所应使用的账号

@@ -2,6 +2,7 @@ import os.path
 
 from bilibili_api.video import video_upload, video_cover_upload, video_submit, get_video_info, video_update
 
+from bili_web_api import BiliBili
 from recorder_config import UploaderAccount
 
 SPECIAL_SPACE = "\u2007"
@@ -31,7 +32,15 @@ class UploadTask:
         def on_progress(update):
             print(update)
 
-        filename = video_upload(self.video_path, verify=self.verify, on_progress=on_progress, server='cos')
+        # filename = video_upload(self.video_path, verify=self.verify, on_progress=on_progress, server='cos')
+        biliup_uploader = BiliBili(None)
+        # we have self.account.sessdata, self.account.bili_jct
+        cookie_jar = {
+            "SESSDATA": self.account.sessdata,
+            "bili_jct": self.account.bili_jct
+        }
+        biliup_uploader.login_by_cookies(cookie_jar)
+        filename = biliup_uploader.upload_file(self.video_path, lines=self.account.line)["filename"]
         if self.danmaku:
             suffix = "弹幕高能版"
         else:

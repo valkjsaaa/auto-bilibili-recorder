@@ -2,6 +2,7 @@ from typing import Optional
 
 from bilibili_api import Verify
 
+from bili_web_api import BiliBili
 from bilibili import Bilibili
 
 
@@ -13,6 +14,7 @@ class UploaderAccount:
     bili_jct: str
     login_proxy: str
     access_token: str
+    line: str
     verify: Verify
 
     def __init__(self, config_dict):
@@ -25,12 +27,23 @@ class UploaderAccount:
         if hasattr(self, "login_proxy"):
             b.set_proxy(add=self.login_proxy)
         self.access_token = b.access_token
+        print(self.__dict__)
         if hasattr(self, "sessdata") and hasattr(self, "bili_jct"):
+            biliup_uploader = BiliBili(None)
+            # we have self.account.sessdata, self.account.bili_jct
+            cookie_jar = {
+                "SESSDATA": self.sessdata,
+                "bili_jct": self.bili_jct
+            }
+            biliup_uploader.login_by_cookies(cookie_jar)
+            print(f"验证 cookie 成功: {self.name}")
             pass
         else:
             b.login(username=self.username, password=self.password)
             self.sessdata = b._session.cookies['SESSDATA']
             self.bili_jct = b._session.cookies['bili_jct']
+        if not hasattr(self, "line"):
+            self.line = "auto"
         print(f"login successfully! {self.name} {self.access_token} {self.sessdata} {self.bili_jct}")
         self.verify = Verify(sessdata=self.sessdata, csrf=self.bili_jct)
 

@@ -4,6 +4,7 @@ accounts:
     # sessdata 和 bili_jct 获取见：https://bili.moyu.moe/#/get-credential
     sessdata: "sessdata"                         # SESSDATA cookie
     bili_jct: "bili_jct"                         # bili_jct cookie
+    line: "kodo"                                 # 选择上传线路，见 https://biliup.github.io/upload-systems-analysis.html
 rooms:
   - id: 128308                                   # 需要上传的直播间 ID，请填写完整号码，而不是短号，否则可能不会上传
     uploader: test_bot                           # 上传所应使用的账号 ID

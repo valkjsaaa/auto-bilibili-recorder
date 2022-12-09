@@ -5,16 +5,17 @@ from commons import BINARY_PATH
 
 def spawn_recorder(room):
     spawn_command = \
-        f"{BINARY_PATH}BililiveRecorder/BililiveRecorder.Cli/bin/Release/net5.0/BililiveRecorder.Cli " \
+        f"{BINARY_PATH}BililiveRecorder/BililiveRecorder.Cli/bin/Release/net6.0/BililiveRecorder.Cli " \
         f"portable " \
         f"-d 63 " \
         f"--webhook-url " \
         f'"http://127.0.0.1:10261/process_video" ' \
-        f'--filename-format ' \
-        '{roomid}/{date}/{roomid}-{date}-{time}-{ms}.flv ' \
+        f'--filename ' \
+        '"{{ roomId }}/{{ \\"now\\" | time_zone: \\"Asia/Shanghai\\" | format_date: \\"yyyyMMdd\\" }}/'\
+        '{{ roomId }}-{{ \\"now\\" | time_zone: \\"Asia/Shanghai\\" | format_date: \\"yyyyMMdd-HHmmss-fff\\" }}.flv" ' \
         f'/storage/ ' \
         f'{room} '
-    print(f"swawn recorder for {room}: {spawn_command}")
+    print(f"spawn recorder for {room}: {spawn_command}")
     return subprocess.Popen(spawn_command, shell=True)
 
 

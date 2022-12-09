@@ -27,7 +27,7 @@ RUN if [[ ${COMMON_IMAGE} == *"cuda"* ]] ; then ln -s /usr/local/cuda/lib64/stub
 RUN ln -s /opt/pwsh/pwsh /usr/bin/powershell
 RUN ln -s /root/.dotnet/dotnet /usr/bin/dotnet
 
-RUN git clone https://github.com/BililiveRecorder/BililiveRecorder.git && cd BililiveRecorder && git checkout v2.2.0
+RUN git clone https://github.com/BililiveRecorder/BililiveRecorder.git && cd BililiveRecorder && git checkout v2.5.0
 
 WORKDIR "/BililiveRecorder"
 
@@ -38,7 +38,7 @@ RUN dpkgArch="$(uname -m)"; \
         *) export RID='linux-x64' ;; \
     esac; \
     dotnet build BililiveRecorder.Cli/BililiveRecorder.Cli.csproj -r $RID -c Release -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=True -p:TrimMode=Link &&\
-    ln -s /BililiveRecorder/BililiveRecorder.Cli/bin/Release/net5.0/$RID/BililiveRecorder.Cli /BililiveRecorder/BililiveRecorder.Cli/bin/Release/net5.0/
+    ln -s /BililiveRecorder/BililiveRecorder.Cli/bin/Release/net6.0/$RID/BililiveRecorder.Cli /BililiveRecorder/BililiveRecorder.Cli/bin/Release/net6.0/
 
 
 RUN dotnet nuget locals all --clear
