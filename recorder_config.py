@@ -35,8 +35,12 @@ class UploaderAccount:
                 "SESSDATA": self.sessdata,
                 "bili_jct": self.bili_jct
             }
-            biliup_uploader.login_by_cookies(cookie_jar)
-            print(f"验证 cookie 成功: {self.name}")
+            try:
+                biliup_uploader.login_by_cookie(cookie_jar)
+                print(f"验证 cookie 成功: {self.name}")
+            except Exception as e:
+                print(f"验证 cookie 失败: {self.name}")
+                print(e)
             pass
         else:
             b.login(username=self.username, password=self.password)
