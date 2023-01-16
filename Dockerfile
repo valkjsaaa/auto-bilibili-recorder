@@ -59,7 +59,7 @@ RUN make -f makefile
 
 #ENTRYPOINT /bin/bash
 
-RUN pip3 install git+https://github.com/valkjsaaa/danmaku_tools.git@0c07ab48b21abf76ff27737cabeecdf205d593ce
+RUN pip3 install git+https://github.com/valkjsaaa/danmaku_tools.git@c7d86d10f157066ca24196b4222d9ef291e8e78e
 
 WORKDIR "/usr/local/bin"
 
