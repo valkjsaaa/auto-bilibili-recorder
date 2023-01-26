@@ -62,11 +62,17 @@ class RecoderRoom:
     source: Optional[str]
     he_user_dict: Optional[str]
     he_regex_rules: Optional[str]
-
+    burn_danmaku: Optional[bool]
+    danmaku_font_size: Optional[int]
+    danmaku_show_usrname: Optional[bool]
+    
     def __init__(self, config_dict):
         self.uploader = None
         self.he_user_dict = None
         self.he_regex_rules = None
+        self.burn_danmaku = True
+        self.danmaku_font_size = 55
+        self.danmaku_show_name = True
         for key, value in config_dict.items():
             self.__setattr__(key, value)
 

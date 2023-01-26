@@ -96,6 +96,8 @@ ${录制目标文件夹}
 
 [只录播，不上传](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/example_dir/recorder_config.record_only.yaml)
 
+[只录播不上传，支持弹幕相关自定义选项](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/example_dir/recorder_config.record_only_customize.yaml)
+
 [多个直播间，多个账号](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/example_dir/recorder_config.multi_uploader.yaml)
 
 [用户名密码登陆，使用代理（目前暂时不可用）](https://github.com/valkjsaaa/auto-bilibili-recorder/blob/master/example_dir/recorder_config.password_proxy.yaml)

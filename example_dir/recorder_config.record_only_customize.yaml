@@ -1,0 +1,6 @@
+accounts: {}
+rooms: # 所有需要录制的直播间
+  - id: 22603245        # 需要上传的直播间 ID，请填写完整号码，而不是短号，否则可能不会上传                          
+    burn_danmaku: False           # （不上传情况下）是否压制带有高能条与弹幕的视频，默认为True。选择False仅生成原始录制视频，适合使用本地播放器挂载录制结束后生成的.ass文件观看。
+    danmaku_font_size: 50        # 弹幕字体相对大小，默认为55，仅支持整数。
+    danmaku_show_name: False # 弹幕是否显示发送者用户名，默认为True。选择False更贴近B站直播间风格。

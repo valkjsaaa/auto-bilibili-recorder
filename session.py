@@ -223,7 +223,7 @@ class Session:
 
     async def process_danmaku(self):
         video_res_x, video_res_y = self.get_resolution()
-        font_size = max(video_res_x, video_res_y) * 55 // 1920
+        font_size = max(video_res_x, video_res_y) * self.room_config.danmaku_font_size // 1920
         print(f"font_size: {font_size}")
         danmaku_conversion_command = \
             f"{BINARY_PATH}DanmakuFactory/DanmakuFactory " \
@@ -232,7 +232,7 @@ class Session:
             f"--ignore-warnings " \
             f"-o \"{self.output_path()['ass']}\" " \
             f"-i \"{self.output_path()['clean_xml']}\" " \
-            f"--fontname \"Noto Sans CJK SC\" -S {font_size} -O 255 -L 1 -D 1 --showusernames true --showmsgbox false" \
+            f"--fontname \"Noto Sans CJK SC\" -S {font_size} -O 255 -L 1 -D 1 --showusernames {self.room_config.danmaku_show_name} --showmsgbox false" \
             f">> \"{self.output_path()['extras_log']}\" 2>&1"
         await async_wait_output(danmaku_conversion_command)
 
