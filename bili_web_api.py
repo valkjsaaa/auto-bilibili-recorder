@@ -261,6 +261,9 @@ class BiliBili:
             elif lines == 'cs-bda2':
                 self._auto_os = {"os": "upos", "query": "upcdn=bda2&probe_version=20221109",
                                  "probe_url": "//upos-cs-upcdnbda2.bilivideo.com/OK"}
+            elif lines == 'bldsa':
+                self._auto_os = {"os": "upos", "query": "upcdn=bldsa&probe_version=20221109",
+                                 "probe_url": "//upos-cs-upcdnbldsa.bilivideo.com/OK"}
             elif lines == 'ws':
                 self._auto_os = {"os": "upos", "query": "upcdn=ws&probe_version=20221109",
                                  "probe_url": "//upos-sz-upcdnws.bilivideo.com/OK"}
