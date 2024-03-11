@@ -1,11 +1,10 @@
 import datetime
-import json
 import traceback
 from typing import Any
 
 import bilibili_api
 import srt
-from bilibili_api import Verify, video
+from bilibili_api import Credential, video
 
 from upload_task import UploadTask
 
@@ -14,49 +13,53 @@ HOURS_THRESHOLD = 12
 
 
 class SubtitleTask:
-    def __init__(self, subtitle_path: str, bvid: str, cid: int, verify: Verify):
+    def __init__(self, subtitle_path: str, bvid: str, verify: Credential):
         self.subtitle_path = subtitle_path
-        self.cid = cid
         self.bvid = bvid
         self.start_date = datetime.datetime.now(datetime.timezone.utc)
-        self.sessdata = verify.sessdata
-        self.csrf = verify.csrf
+        self.verify = verify
         self.error_count = 0
 
     def to_dict(self):
-        return vars(self)
+        return {
+            "subtitle_path": self.subtitle_path,
+            "bvid": self.bvid,
+            "credential_dict": self.verify.get_cookies(),
+            "start_date": self.start_date,
+            "error_count": self.error_count
+        }
 
     @staticmethod
     def from_dict(save_dict: {str: Any}) -> 'SubtitleTask':
         comment_task = SubtitleTask(
             save_dict['subtitle_path'],
             save_dict['bvid'],
-            save_dict['cid'],
-            Verify(save_dict['sessdata'], save_dict['csrf'])
+            Credential.from_cookies(save_dict['credential_dict'])
         )
         for key, value in save_dict.items():
-            comment_task.__setattr__(key, value)
+            if key != "credential_dict":
+                comment_task.__setattr__(key, value)
         return comment_task
 
     @staticmethod
-    def from_upload_task(upload_task: UploadTask, bvid: str, cid: int) -> 'SubtitleTask':
-        comment_task = SubtitleTask(upload_task.subtitle_path, bvid, cid, upload_task.verify)
+    def from_upload_task(upload_task: UploadTask, bvid: str) -> 'SubtitleTask':
+        comment_task = SubtitleTask(upload_task.subtitle_path, bvid, upload_task.verify)
         return comment_task
 
     def is_earlier_task_of(self, new_task: 'SubtitleTask'):
         return new_task.bvid == self.bvid and new_task.start_date > self.start_date
 
-    def post_subtitle(self) -> bool:
+    async def post_subtitle(self) -> bool:
         if (datetime.datetime.now(datetime.timezone.utc) - self.start_date).total_seconds() / 60 / 60 > HOURS_THRESHOLD:
             return True
+        target_video = video.Video(bvid=self.bvid, credential=self.verify)
         if self.error_count > ERROR_THRESHOLD:
             return True
         try:
-            video.get_video_info(self.bvid)
-        except bilibili_api.exceptions.BilibiliApiException:  # Video not published yet
+            await target_video.get_info()
+        except (bilibili_api.ApiException, bilibili_api.ResponseCodeException):  # Video not published yet
             return False
         self.error_count += 1
-        verify = Verify(self.sessdata, self.csrf)
         with open(self.subtitle_path) as srt_file:
             srt_obj = srt.parse(srt_file.read())
         srt_json = {
@@ -77,11 +80,16 @@ class SubtitleTask:
                 "content": srt_single_obj.content
             }
             srt_json["body"] += [srt_single_obj_body]
-        srt_json_str = json.dumps(srt_json)
-        print(f"posting subtitles on {self.cid} of {self.bvid}")
+        print(f"posting subtitles on {self.bvid}")
         try:
-            video.save_subtitle(srt_json_str, bvid=self.bvid, cid=self.cid, verify=verify)
-        except bilibili_api.exceptions.BilibiliApiException as e:
+            await target_video.submit_subtitle(
+                lan="zh-CN",
+                data=srt_json,
+                submit=True,
+                sign=True,
+                page_index=0
+            )
+        except bilibili_api.ResponseCodeException as e:
             # noinspection PyUnresolvedReferences
             if hasattr(e, 'code') and (e.code == 79022 or e.code == -404 or e.code == 502):  # video not approved yet
                 self.error_count -= 1
@@ -89,14 +97,24 @@ class SubtitleTask:
             else:
                 print(traceback.format_exc())
                 return False
+        except Exception as e:
+            self.error_count -= 1
+            print(traceback.format_exc())
+            return False
         return True
 
 
 if __name__ == '__main__':
     import yaml
 
-    ct_1 = SubtitleTask("subtitle_path", "BV", 12345678, Verify("sessdata", "csrf"))
+    ct_1 = SubtitleTask("subtitle_path", "BV", Credential.from_cookies({
+            "buvid3": "buvid3",
+            "buvid4": "buvid4",
+            "DedeUserID": "DedeUserID",
+            "SESSDATA": "SESSDATA",
+            "bili_jct": "bili_jct"
+    }))
     ct_yaml = yaml.dump(ct_1.to_dict())
-    ct_2 = SubtitleTask.from_dict(yaml.load(ct_yaml))
+    ct_2 = SubtitleTask.from_dict(yaml.load(ct_yaml, Loader=yaml.FullLoader))
     print(ct_1)
     print(ct_2)

@@ -29,11 +29,11 @@ rooms:
       由 $uploader_name 录播脚本上传
       录播源文件 https://tsxk.jya.ng/$flv_path
   - id: 5268                                       # 需要上传的直播间 ID，请填写完整号码，而不是短号，否则可能不会上传
-      uploader: test_bot2                          # 上传所应使用的账号
-      tags: "录播,直播录屏,吃素的狮子"                 # 上传视频所使用的 tag
-      channel_id: 21                               # 上传视频所用的分区 ID，参考：https://github.com/greats3an/bilibili-toolman#分区表
-      title: 【$name】$yy年$mm月$dd日 $title         # 视频标题，可以使用模版
-      source: "https://live.bilibili.com/261"      # 转载来源，建议填写直播间短号（如果有的话）链接
-      description: >-                              # 视频描述，可以使用模版
-        由 $uploader_name 录播脚本上传
-        录播源文件 https://tsxk.jya.ng/$flv_path
+    uploader: test_bot2                          # 上传所应使用的账号
+    tags: "录播,直播录屏,吃素的狮子"                 # 上传视频所使用的 tag
+    channel_id: 21                               # 上传视频所用的分区 ID，参考：https://github.com/greats3an/bilibili-toolman#分区表
+    title: 【$name】$yy年$mm月$dd日 $title         # 视频标题，可以使用模版
+    source: "https://live.bilibili.com/261"      # 转载来源，建议填写直播间短号（如果有的话）链接
+    description: >-                              # 视频描述，可以使用模版
+      由 $uploader_name 录播脚本上传
+      录播源文件 https://tsxk.jya.ng/$flv_path

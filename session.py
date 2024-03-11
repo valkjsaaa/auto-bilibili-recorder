@@ -219,6 +219,15 @@ class Session:
         ]))  # prioritize wider, higher-res format
         video_res_x = video_res_sorted[0][1]
         video_res_y = video_res_sorted[0][2]
+        # try to scale to at least 1920x1080 or 1080x1920
+        if video_res_x > video_res_y:
+            if video_res_x < 1920:
+                video_res_y = video_res_y * 1920 // video_res_x
+                video_res_x = 1920
+        else:
+            if video_res_y < 1920:
+                video_res_x = video_res_x * 1920 // video_res_y
+                video_res_y = 1920
         return video_res_x, video_res_y
 
     async def process_danmaku(self):

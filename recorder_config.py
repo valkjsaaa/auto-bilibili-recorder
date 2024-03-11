@@ -1,15 +1,11 @@
+from collections import OrderedDict
 from typing import Optional
 
-from bilibili_api import Verify
-
-from bili_web_api import BiliBili
-from bilibili import Bilibili
+from bilibili_api import Credential, sync
 
 
 class UploaderAccount:
     name: str
-    username: str
-    password: str
     sessdata: str
     bili_jct: str
     buvid3: str
@@ -18,41 +14,36 @@ class UploaderAccount:
     login_proxy: str
     access_token: str
     line: str
-    verify: Verify
+    verify: Credential
 
     def __init__(self, config_dict):
         for key, value in config_dict.items():
             self.__setattr__(key, value)
         self.login()
 
+    def get_cookie_dict(self):
+        return OrderedDict({
+            "buvid3": self.buvid3,
+            "buvid4": self.buvid4,
+            "DedeUserID": self.dedeuserid,
+            "SESSDATA": self.sessdata,
+            "bili_jct": self.bili_jct,
+        })
+
     def login(self):
-        b = Bilibili()
-        if hasattr(self, "login_proxy"):
-            b.set_proxy(add=self.login_proxy)
-        self.access_token = b.access_token
         print(self.__dict__)
-        if hasattr(self, "sessdata") and hasattr(self, "bili_jct"):
-            biliup_uploader = BiliBili(None)
-            # we have self.account.sessdata, self.account.bili_jct
-            cookie_jar = {
-                "SESSDATA": self.sessdata,
-                "bili_jct": self.bili_jct
-            }
-            try:
-                biliup_uploader.login_by_cookies(cookie_jar)
-                print(f"验证 cookie 成功: {self.name}")
-            except Exception as e:
-                print(f"验证 cookie 失败: {self.name}")
-                print(e)
-            pass
-        else:
-            b.login(username=self.username, password=self.password)
-            self.sessdata = b._session.cookies['SESSDATA']
-            self.bili_jct = b._session.cookies['bili_jct']
+        assert (
+                hasattr(self, "sessdata") and
+                hasattr(self, "bili_jct") and
+                hasattr(self, "buvid3") and
+                hasattr(self, "buvid4") and
+                hasattr(self, "dedeuserid")
+        ), f"missing cookies! {self.name}, \"sessdata\", \"bili_jct\", \"buvid3\", \"buvid4\", \"dedeuserid\""
+        self.verify = Credential.from_cookies(self.get_cookie_dict())
+        assert sync(self.verify.check_valid()), f"login failed! {self.name}"
+        print(f"login successfully! {self.name} {self.sessdata} {self.bili_jct}")
         if not hasattr(self, "line"):
             self.line = "auto"
-        print(f"login successfully! {self.name} {self.access_token} {self.sessdata} {self.bili_jct}")
-        self.verify = Verify(sessdata=self.sessdata, csrf=self.bili_jct)
 
 
 class RecoderRoom:

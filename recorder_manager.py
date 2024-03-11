@@ -1,5 +1,4 @@
 import subprocess
-from collections import OrderedDict
 
 from commons import BINARY_PATH
 from recorder_config import RecoderRoom
@@ -9,13 +8,7 @@ def spawn_recorder(room: RecoderRoom):
     cookie_command = ""
     if room.recorder_obj is not None:
         recorder_obj = room.recorder_obj
-        cookie_dict = OrderedDict({
-            "buvid3": recorder_obj.buvid3,
-            "buvid4": recorder_obj.buvid4,
-            "DedeUserID": recorder_obj.dedeuserid,
-            "SESSDATA": recorder_obj.sessdata,
-            "bili_jct": recorder_obj.bili_jct,
-        })
+        cookie_dict = recorder_obj.get_cookie_dict()
         # if any cookie value is None, we can't use it for recording
         if None in cookie_dict.values():
             print(f"invalid cookie for {room.id}, connect to websocket without cookie.")
@@ -69,4 +62,3 @@ if __name__ == '__main__':
 
     manager.update_rooms([3])
     time.sleep(10)
-

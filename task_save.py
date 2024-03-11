@@ -36,12 +36,18 @@ class TaskSave:
 
 if __name__ == '__main__':
     import yaml
-    from bilibili_api import Verify
+    from bilibili_api import Credential
     ts = TaskSave()
-    ct = CommentTask("sc_path", "he_path", "session_id", Verify("sessdata", "csrf"))
+    ct = CommentTask("sc_path", "he_path", "session_id", Credential.from_cookies({
+        "buvid3": "buvid3",
+        "buvid4": "buvid4",
+        "DedeUserID": "dedeuserid",
+        "SESSDATA": "sessdata",
+        "bili_jct": "bili_jct"
+    }))
     ts.active_comment_tasks += [ct]
     ts.session_id_map["session_id"] = "bvid"
     ts_yaml = yaml.dump(ts.to_dict())
-    ts_1 = TaskSave.from_dict(yaml.load(ts_yaml))
+    ts_1 = TaskSave.from_dict(yaml.load(ts_yaml, Loader=yaml.FullLoader))
     print(ts)
     print(ts_1)

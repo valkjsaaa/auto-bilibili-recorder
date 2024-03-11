@@ -19,6 +19,7 @@ from io import BytesIO
 
 import aiohttp
 import requests
+import requests.utils
 import rsa
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
@@ -564,10 +565,10 @@ class BiliBili:
             xsize, ysize = im.size
             if xsize / ysize > 1.6:
                 delta = xsize - ysize * 1.6
-                region = im.crop((delta / 2, 0, xsize - delta / 2, ysize))
+                region = im.crop((int(delta / 2), 0, int(xsize - delta / 2), ysize))
             else:
                 delta = ysize - xsize * 10 / 16
-                region = im.crop((0, delta / 2, xsize, ysize - delta / 2))
+                region = im.crop((0, int(delta / 2), xsize, int(ysize - delta / 2)))
             buffered = BytesIO()
             region.save(buffered, format=im.format)
         r = self.__session.post(

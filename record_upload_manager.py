@@ -9,7 +9,7 @@ from string import Template
 
 import dateutil.parser
 import yaml
-from bilibili_api import video
+from bilibili_api import sync
 
 from comment_task import CommentTask
 from recorder_config import RecorderConfig, UploaderAccount
@@ -48,6 +48,7 @@ class RecordUploadManager:
         self.subtitle_post_thread = threading.Thread(target=self.subtitle_poster)
         self.video_processing_loop = asyncio.new_event_loop()
         self.video_uploading_loop = asyncio.new_event_loop()
+        self.comment_posting_loop = asyncio.new_event_loop()
         self.subtitle_posting_loop = asyncio.new_event_loop()
         self.video_upload_thread.start()
         self.comment_post_thread.start()
@@ -65,20 +66,19 @@ class RecordUploadManager:
             upload_task = self.video_upload_queue.get()
             try:
                 first_video_comment = upload_task.session_id not in self.save.session_id_map
-                bv_id = upload_task.upload(self.save.session_id_map)
+                bv_id = sync(upload_task.upload(self.save.session_id_map))
                 sys.stdout.flush()
                 with self.save_lock:
                     self.save.session_id_map[upload_task.session_id] = bv_id
                     self.save_progress()
                 if first_video_comment:
+                    print("adding comment task to queue")
                     self.comment_post_queue.put(
                         CommentTask.from_upload_task(upload_task)
                     )
-                v_info = video.get_video_info(bvid=bv_id, is_simple=False, is_member=True, verify=upload_task.verify)
-                cid = v_info['videos'][0]['cid']
                 print("adding subtitle task to queue")
                 self.subtitle_post_queue.put(
-                    SubtitleTask.from_upload_task(upload_task, bv_id, cid)
+                    SubtitleTask.from_upload_task(upload_task, bv_id)
                 )
             except Exception:
                 if upload_task.trial < 5:
@@ -90,7 +90,7 @@ class RecordUploadManager:
                 print(traceback.format_exc())
 
     def comment_poster(self):
-        asyncio.set_event_loop(self.video_uploading_loop)
+        asyncio.set_event_loop(self.comment_posting_loop)
         while True:
             with self.save_lock:
                 while not self.comment_post_queue.empty():
@@ -101,7 +101,7 @@ class RecordUploadManager:
                     task_to_remove = []
                     for idx, task in enumerate(self.save.active_comment_tasks):
                         task: CommentTask
-                        if task.post_comment(self.save.session_id_map):
+                        if sync(task.post_comment(self.save.session_id_map)):
                             task_to_remove += [idx]
                     if task_to_remove != 0:
                         with self.save_lock:
@@ -130,7 +130,7 @@ class RecordUploadManager:
                     for idx, task in enumerate(self.save.active_subtitle_tasks):
                         task: SubtitleTask
                         print("try posting subtitle")
-                        if task.post_subtitle():
+                        if sync(task.post_subtitle()):
                             task_to_remove += [idx]
                     if task_to_remove != 0:
                         with self.save_lock:
@@ -182,7 +182,8 @@ class RecordUploadManager:
             "yy": f"{session.start_time.year:04d}",
             "mm": f"{session.start_time.month:02d}",
             "dd": f"{session.start_time.day:02d}",
-            "flv_path": session.videos[0].flv_file_path()
+            # remove "/storage/" prefix
+            "flv_path": session.videos[0].flv_file_path()[9:],  # remove "/storage/" prefix
         }
         title = Template(room_config.title).substitute(substitute_dict)
         temp_title = title
