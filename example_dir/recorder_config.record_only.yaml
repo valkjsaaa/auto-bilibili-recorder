@@ -1,7 +1,21 @@
-accounts: {}
+accounts:
+  test_bot:                               # 录播账号 ID 用来在房间里对应
+    name: 熊卡录播bot                       # 录播账号的名字，可以用于模版
+    # 以下信息获取见：https://nemo2011.github.io/bilibili-api/#/get-credential
+    # 为了能够获取完整弹幕信息，需要登陆信息。登陆有风险，建议只录播不上传的话使用备用账号
+    sessdata: ""                          # SESSDATA cookie
+    bili_jct: ""                          # bili_jct cookie
+    buvid3: ""                            # buvid3 cookie
+    buvid4: ""                            # buvid4 cookie
+    dedeuserid: ""                        # dedeuserid cookie
 rooms: # 所有需要录制的直播间
   - id: 128308
+    recorder: test_bot                    # 录播所应使用的账号 ID
   - id: 16405
+    recorder: test_bot
   - id: 5054
+    recorder: test_bot
   - id: 718676
+    recorder: test_bot
   - id: 5268
+    recorder: test_bot

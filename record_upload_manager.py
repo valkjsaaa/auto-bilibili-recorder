@@ -37,7 +37,7 @@ class RecordUploadManager:
             print("Creating save file")
             self.save = TaskSave()
             self.save_progress()
-        self.recorder_manager = RecorderManager([room.id for room in self.config.rooms])
+        self.recorder_manager = RecorderManager([room for room in self.config.rooms])
         self.sessions: {str: Session} = dict()
         self.video_upload_queue: Queue[UploadTask] = Queue()
         self.comment_post_queue: Queue[CommentTask] = Queue()
@@ -162,13 +162,13 @@ class RecordUploadManager:
             print(f"No video in session: {session.room_id}@{session.session_id}")
             return
         room_config = session.room_config
-        if room_config.uploader is None:
+        if room_config.uploader_obj is None:
             print(f"No need to upload for {room_config.id}")
             await session.gen_early_video()
             await asyncio.sleep(WAIT_SESSION_MINUTES * 60)
             await session.gen_danmaku_video()
             return
-        uploader: UploaderAccount = self.config.accounts[room_config.uploader]
+        uploader: UploaderAccount = room_config.uploader_obj
         substitute_dict = {
             "name": session.room_name,
             "title": session.room_title,

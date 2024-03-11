@@ -1,11 +1,31 @@
 import subprocess
+from collections import OrderedDict
 
 from commons import BINARY_PATH
+from recorder_config import RecoderRoom
 
 
-def spawn_recorder(room):
+def spawn_recorder(room: RecoderRoom):
+    cookie_command = ""
+    if room.recorder_obj is not None:
+        recorder_obj = room.recorder_obj
+        cookie_dict = OrderedDict({
+            "buvid3": recorder_obj.buvid3,
+            "buvid4": recorder_obj.buvid4,
+            "DedeUserID": recorder_obj.dedeuserid,
+            "SESSDATA": recorder_obj.sessdata,
+            "bili_jct": recorder_obj.bili_jct,
+        })
+        # if any cookie value is None, we can't use it for recording
+        if None in cookie_dict.values():
+            print(f"invalid cookie for {room.id}, connect to websocket without cookie.")
+        else:
+            cookie_command = "--cookie \"" + "; ".join([f"{k}={v}" for k, v in cookie_dict.items()]) + "\" "
+            print(f"recorder for {room.id} with cookie: {cookie_command}")
+    else:
+        print(f"no recorder for {room.id}, connect to websocket without cookie.")
     spawn_command = \
-        f"{BINARY_PATH}BililiveRecorder/BililiveRecorder.Cli/bin/Release/net6.0/BililiveRecorder.Cli " \
+        f"{BINARY_PATH}BililiveRecorder/BililiveRecorder.Cli " \
         f"portable " \
         f"-d 63 " \
         f"--webhook-url " \
@@ -13,15 +33,16 @@ def spawn_recorder(room):
         f'--filename ' \
         '"{{ roomId }}/{{ \\"now\\" | time_zone: \\"Asia/Shanghai\\" | format_date: \\"yyyyMMdd\\" }}/'\
         '{{ roomId }}-{{ \\"now\\" | time_zone: \\"Asia/Shanghai\\" | format_date: \\"yyyyMMdd-HHmmss-fff\\" }}.flv" ' \
+        f'{cookie_command}' \
         f'/storage/ ' \
-        f'{room} '
-    print(f"spawn recorder for {room}: {spawn_command}")
+        f'{room.id} '
+    print(f"spawn recorder for {room.id}: {spawn_command}")
     return subprocess.Popen(spawn_command, shell=True)
 
 
 class RecorderManager:
 
-    def __init__(self, rooms):
+    def __init__(self, rooms: [RecoderRoom]):
         self.recorder_dict: {int: subprocess.Popen} = {room: spawn_recorder(room) for room in rooms}
 
     def update_rooms(self, new_rooms, dry_run=False):
@@ -42,7 +63,7 @@ class RecorderManager:
 if __name__ == '__main__':
     import time
     BINARY_PATH = "../exes/"
-    manager = RecorderManager([1])
+    manager = RecorderManager([RecoderRoom({"id": 3})])
 
     time.sleep(10)
 

@@ -20,16 +20,16 @@ RUN mkdir -p /opt/pwsh
 RUN tar -xvzf powershell.tar.gz -C /opt/pwsh
 
 RUN wget https://dot.net/v1/dotnet-install.sh
-RUN bash ./dotnet-install.sh -c 6.0
+RUN bash ./dotnet-install.sh -c 8.0
 
-RUN if [[ ${COMMON_IMAGE} == *"cuda"* ]] ; then ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 ; fi
+RUN [ "/bin/bash", "-c", "if [[ ${COMMON_IMAGE} == *'cuda'* ]] ; then ln -s /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1 ; fi" ]
 
 RUN ln -s /opt/pwsh/pwsh /usr/bin/powershell
 RUN ln -s /root/.dotnet/dotnet /usr/bin/dotnet
 
-RUN git clone https://github.com/BililiveRecorder/BililiveRecorder.git && cd BililiveRecorder && git checkout v2.8.0
+RUN git clone https://github.com/BililiveRecorder/BililiveRecorder.git BililiveRecorder-src && cd BililiveRecorder-src && git checkout v2.11.0
 
-WORKDIR "/BililiveRecorder"
+WORKDIR "/BililiveRecorder-src"
 
 RUN dpkgArch="$(uname -m)"; \
     case "$dpkgArch" in \
@@ -37,8 +37,7 @@ RUN dpkgArch="$(uname -m)"; \
         x86_64) export RID='linux-x64' ;; \
         *) export RID='linux-x64' ;; \
     esac; \
-    dotnet build BililiveRecorder.Cli/BililiveRecorder.Cli.csproj -r $RID -c Release -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:PublishTrimmed=True -p:TrimMode=Link &&\
-    ln -s /BililiveRecorder/BililiveRecorder.Cli/bin/Release/net6.0/$RID/BililiveRecorder.Cli /BililiveRecorder/BililiveRecorder.Cli/bin/Release/net6.0/
+    cd BililiveRecorder.Cli && dotnet build -o /BililiveRecorder -c Release -r $RID
 
 
 RUN dotnet nuget locals all --clear
@@ -50,7 +49,7 @@ RUN rm -rf /root/.dotnet
 
 WORKDIR "/"
 
-RUN git clone https://github.com/hihkm/DanmakuFactory.git && cd DanmakuFactory && git checkout cab7cf813e5322ec3f41431fcae330a800d457a3
+RUN git clone https://github.com/hihkm/DanmakuFactory.git && cd DanmakuFactory && git checkout d994828fa3bb39c06e625062faadf5a8850abeaf
 
 WORKDIR "/DanmakuFactory"
 
@@ -74,7 +73,7 @@ COPY requirements.txt .
 RUN pip3 install --upgrade -r requirements.txt
 RUN wget https://raw.githubusercontent.com/valkjsaaa/Bilibili-Toolkit/7b86a61214149cc3f790d02d5d06ecd7540b9bdb/bilibili.py
 
-COPY *.py .
+COPY *.py ./
 
 WORKDIR "/storage"
 ENV PYTHONUNBUFFERED=1
