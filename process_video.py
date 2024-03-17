@@ -2,6 +2,10 @@ from quart import Quart, request, Response
 
 from record_upload_manager import RecordUploadManager
 
+from bilibili_api import settings
+
+settings.timeout = 60.0
+
 app = Quart(__name__)
 
 record_upload_manager = RecordUploadManager("./recorder_config.yaml", "recorder_save.yaml")
