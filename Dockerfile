@@ -38,8 +38,8 @@ RUN mkdir temp
 RUN make -f makefile
 
 WORKDIR "/usr/local/bin"
-RUN wget https://raw.githubusercontent.com/keylase/nvidia-patch/2d31a42d8da0050a63d4f466ddd1244321e2ef52/patch.sh && \
-    wget https://raw.githubusercontent.com/keylase/nvidia-patch/2d31a42d8da0050a63d4f466ddd1244321e2ef52/docker-entrypoint.sh && \
+RUN wget https://raw.githubusercontent.com/keylase/nvidia-patch/c7221dd770279275a06f34e68b39b8d237ea9b7b/patch.sh && \
+    wget https://raw.githubusercontent.com/keylase/nvidia-patch/c7221dd770279275a06f34e68b39b8d237ea9b7b/docker-entrypoint.sh && \
     chmod +x patch.sh && \
     chmod +x docker-entrypoint.sh
 
