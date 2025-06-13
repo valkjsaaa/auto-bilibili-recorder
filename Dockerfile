@@ -17,10 +17,10 @@ RUN dpkgArch="$(uname -m)" && \
     echo "Detected architecture: $dpkgArch" && \
     case "$dpkgArch" in \
         aarch64) \
-            URL='https://github.com/BililiveRecorder/BililiveRecorder/releases/download/v2.11.0/BililiveRecorder-CLI-linux-arm64.zip' \
+            URL='https://github.com/BililiveRecorder/BililiveRecorder/releases/download/v2.17.0/BililiveRecorder-CLI-linux-arm64.zip' \
             ;; \
         x86_64) \
-            URL='https://github.com/BililiveRecorder/BililiveRecorder/releases/download/v2.11.0/BililiveRecorder-CLI-linux-x64.zip' \
+            URL='https://github.com/BililiveRecorder/BililiveRecorder/releases/download/v2.17.0/BililiveRecorder-CLI-linux-x64.zip' \
             ;; \
         *) \
             echo "Unsupported architecture: $dpkgArch" && exit 1 \
