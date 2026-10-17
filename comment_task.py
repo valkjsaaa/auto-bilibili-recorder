@@ -1,4 +1,5 @@
 import datetime
+import os
 import traceback
 import re
 from typing import Any
@@ -113,53 +114,59 @@ class CommentTask:
         print(f"posting comments on {bvid}")
         self.error_count += 1
         # load sc and se text
-        with open(self.sc_path, 'r') as file:
-            # sc_str = process_text(file.read(), bvid)
-            sc_str = file.read()
-        with open(self.he_path, 'r') as file:
-            # he_str = process_text(file.read(), bvid)
-            he_str = file.read()
+        sc_str, he_str = "", ""
+        # missing when the session had no danmaku
+        if os.path.isfile(self.sc_path):
+            with open(self.sc_path, 'r') as file:
+                # sc_str = process_text(file.read(), bvid)
+                sc_str = file.read()
+        if os.path.isfile(self.he_path):
+            with open(self.he_path, 'r') as file:
+                # he_str = process_text(file.read(), bvid)
+                he_str = file.read()
         sc_list = sc_str.split(SEG_CHAR)
         he_list = he_str.split(SEG_CHAR)
         try:
-            if self.he_root_id == "":
-                resp = await send_comment(
-                    he_list[0],
-                    oid=target_video.get_aid(),
-                    type_=comment.CommentResourceType.VIDEO,
-                    credential=self.verify
-                )
-                self.he_root_id = resp['rpid']
-                self.he_progress = 1
-            for i, content in enumerate(he_list):
-                if i >= self.he_progress:
-                    await send_comment(
-                        content,
+            if he_str.strip():
+                if self.he_root_id == "":
+                    resp = await send_comment(
+                        he_list[0],
                         oid=target_video.get_aid(),
                         type_=comment.CommentResourceType.VIDEO,
-                        root=self.he_root_id,
                         credential=self.verify
                     )
-                    self.he_progress = i + 1
-            if self.sc_root_id == "":
-                resp = await send_comment(
-                    sc_list[0],
-                    oid=target_video.get_aid(),
-                    type_=comment.CommentResourceType.VIDEO,
-                    credential=self.verify
-                )
-                self.sc_root_id = resp['rpid']
-                self.sc_progress = 1
-            for i, content in enumerate(sc_list):
-                if i >= self.sc_progress:
-                    await send_comment(
-                        content,
+                    self.he_root_id = resp['rpid']
+                    self.he_progress = 1
+                for i, content in enumerate(he_list):
+                    if i >= self.he_progress:
+                        await send_comment(
+                            content,
+                            oid=target_video.get_aid(),
+                            type_=comment.CommentResourceType.VIDEO,
+                            root=self.he_root_id,
+                            credential=self.verify
+                        )
+                        self.he_progress = i + 1
+            if sc_str.strip():
+                if self.sc_root_id == "":
+                    resp = await send_comment(
+                        sc_list[0],
                         oid=target_video.get_aid(),
                         type_=comment.CommentResourceType.VIDEO,
-                        root=self.sc_root_id,
                         credential=self.verify
                     )
-                    self.sc_progress = i + 1
+                    self.sc_root_id = resp['rpid']
+                    self.sc_progress = 1
+                for i, content in enumerate(sc_list):
+                    if i >= self.sc_progress:
+                        await send_comment(
+                            content,
+                            oid=target_video.get_aid(),
+                            type_=comment.CommentResourceType.VIDEO,
+                            root=self.sc_root_id,
+                            credential=self.verify
+                        )
+                        self.sc_progress = i + 1
         except (bilibili_api.ApiException, bilibili_api.ResponseCodeException):
             print("Comment posting failed")
             print(print(traceback.format_exc()))

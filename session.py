@@ -100,6 +100,7 @@ class Session:
         self.total_length = 0
         self.videos = []
         self.he_time = None
+        self.danmaku_available = True
         self.early_video_path = None
         self.process_update(session_start_event_json)
         self.upload_task: Optional[Task] = None
@@ -183,9 +184,14 @@ class Session:
             f"\"{self.output_path()['clean_xml']}\" " \
             f">> \"{self.output_path()['extras_log']}\" 2>&1"
         await async_wait_output(danmaku_extras_command)
-        with open(self.output_path()['he_pos'], 'r') as file:
-            he_time_str = file.readline()
-            self.he_time = float(he_time_str)
+        try:
+            with open(self.output_path()['he_pos'], 'r') as file:
+                self.he_time = float(file.readline())
+        except (OSError, ValueError):
+            # danmaku_energy_map fails when there is no danmaku at all, e.g. the danmaku server kept rejecting us
+            print(f"no danmaku energy map for {self.output_base_path()}, see {self.output_path()['extras_log']}")
+            self.danmaku_available = False
+            self.he_time = sum(video.video_length_flv for video in self.videos) / 2
 
     def generate_concat(self):
         concat_text = "\n".join([f"file '{video.flv_file_path()}'" for video in self.videos])
@@ -203,7 +209,7 @@ class Session:
                 break
             local_he_time -= video.video_length_flv
         if not thumbnail_generated:  # Rare case where he_pos is after the last video
-            print(f"{self.output_path()['video']}: thumbnail at {local_he_time} cannot be found")
+            print(f"{self.output_base_path()}: thumbnail at {local_he_time} cannot be found")
             await self.videos[-1].gen_thumbnail(
                 self.videos[-1].video_length_flv / 2,
                 self.output_path()['thumbnail'],
@@ -309,7 +315,8 @@ class Session:
         await self.merge_xml()
         await self.clean_xml()
         await self.process_xml()
-        await self.process_danmaku()
+        if self.danmaku_available:
+            await self.process_danmaku()
         await self.process_thumbnail()
         self.generate_concat()
         await self.process_early_video()

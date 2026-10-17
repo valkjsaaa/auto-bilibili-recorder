@@ -1,9 +1,11 @@
 import asyncio
 import os.path
+import re
 import sys
 import threading
 import time
 import traceback
+import uuid
 from queue import Queue
 from string import Template
 
@@ -12,6 +14,7 @@ import yaml
 from bilibili_api import sync
 
 from comment_task import CommentTask
+from credential_store import CredentialStore
 from recorder_config import RecorderConfig, UploaderAccount
 from recorder_manager import RecorderManager
 from session import Session, Video
@@ -22,14 +25,18 @@ from upload_task import UploadTask
 CONTINUE_SESSION_MINUTES = 5
 WAIT_SESSION_MINUTES = 6
 WAIT_BEFORE_SESSION_MINUTES = 1
+COOKIE_CHECK_HOURS = 6
+UPLOAD_RETRY_WAIT_SECONDS = 60
 
 
 class RecordUploadManager:
     def __init__(self, config_path, save_path):
         self.config_path = config_path
         self.save_path = save_path
+        credential_store = CredentialStore(
+            os.path.join(os.path.dirname(os.path.abspath(config_path)), "account_credentials.yaml"))
         with open(config_path, 'r') as file:
-            self.config = RecorderConfig(yaml.load(file, Loader=yaml.FullLoader))
+            self.config = RecorderConfig(yaml.load(file, Loader=yaml.FullLoader), store=credential_store)
         if os.path.isfile(save_path):
             with open(save_path, 'r') as file:
                 self.save = TaskSave.from_dict(yaml.load(file, Loader=yaml.FullLoader))
@@ -37,12 +44,16 @@ class RecordUploadManager:
             print("Creating save file")
             self.save = TaskSave()
             self.save_progress()
+        self.rebind_task_credentials()
         self.recorder_manager = RecorderManager([room for room in self.config.rooms])
         self.sessions: {str: Session} = dict()
         self.video_upload_queue: Queue[UploadTask] = Queue()
         self.comment_post_queue: Queue[CommentTask] = Queue()
         self.subtitle_post_queue: Queue[SubtitleTask] = Queue()
         self.save_lock = threading.Lock()
+        self.live_rooms: set[int] = set()
+        self.rooms_pending_restart: set = set()
+        self.credential_refresh_thread = threading.Thread(target=self.credential_refresher, daemon=True)
         self.video_upload_thread = threading.Thread(target=self.video_uploader)
         self.comment_post_thread = threading.Thread(target=self.comment_poster)
         self.subtitle_post_thread = threading.Thread(target=self.subtitle_poster)
@@ -55,6 +66,36 @@ class RecordUploadManager:
         self.subtitle_post_thread.start()
         self.video_uploading_thread = threading.Thread(target=lambda: self.video_processing_loop.run_forever())
         self.video_uploading_thread.start()
+        self.credential_refresh_thread.start()
+
+    def rebind_task_credentials(self):
+        """Saved tasks carry a copy of the cookies; point them at the live (refreshable) account credential."""
+        accounts_by_uid = {str(account.dedeuserid): account for account in self.config.accounts.values()}
+        for task in self.save.active_comment_tasks + self.save.active_subtitle_tasks:
+            account = accounts_by_uid.get(str(task.verify.dedeuserid))
+            if account is not None:
+                task.verify = account.verify
+
+    def credential_refresher(self):
+        last_check = time.time()  # accounts were just checked at login
+        while True:
+            time.sleep(5 * 60)
+            if time.time() - last_check >= COOKIE_CHECK_HOURS * 60 * 60:
+                last_check = time.time()
+                for account in self.config.accounts.values():
+                    if account.refresh_if_needed():
+                        self.rooms_pending_restart.update(
+                            room for room in self.config.rooms if room.recorder_obj is account)
+            # Recorders only read cookies at startup, so restart them, but never in the middle of a stream.
+            for room in list(self.rooms_pending_restart):
+                if room.id in self.live_rooms:
+                    continue
+                try:
+                    self.recorder_manager.restart_room(room)
+                    self.rooms_pending_restart.discard(room)
+                except Exception:
+                    print(f"failed to restart recorder for {room.id}")
+                    print(traceback.format_exc())
 
     def save_progress(self):
         with open(self.save_path, 'w') as file:
@@ -87,7 +128,16 @@ class RecordUploadManager:
                     print(f"Upload failed: {upload_task.title}, retrying")
                 else:
                     print(f"Upload failed too many times: {upload_task.title}")
+                    if upload_task.session_id not in self.save.session_id_map:
+                        # never published, so a later /reprocess may reuse the title
+                        with self.save_lock:
+                            self.save.video_name_history.pop(upload_task.session_id, None)
                 print(traceback.format_exc())
+                # A 403 here is usually stale cookies; check them before the next attempt.
+                if upload_task.account.refresh_if_needed():
+                    self.rooms_pending_restart.update(
+                        room for room in self.config.rooms if room.recorder_obj is upload_task.account)
+                time.sleep(UPLOAD_RETRY_WAIT_SECONDS)
 
     def comment_poster(self):
         asyncio.set_event_loop(self.comment_posting_loop)
@@ -218,6 +268,9 @@ class RecordUploadManager:
                 account=uploader
             )
             self.video_upload_queue.put(early_upload_task)
+        if not session.danmaku_available:
+            print(f"No danmaku for {room_config.id}@{session.session_id}, only uploading the video without danmaku")
+            return
         await asyncio.sleep(WAIT_SESSION_MINUTES * 60)
         await session.gen_danmaku_video()
         danmaku_upload_task = UploadTask(
@@ -264,6 +317,7 @@ class RecordUploadManager:
             print(f"Cannot find room config for {room_id}!")
             return
         if update_json["EventType"] == "SessionStarted":
+            self.live_rooms.add(room_id)
             for session in self.sessions.values():
                 if session.room_id == room_id and \
                         (event_timestamp - session.end_time).total_seconds() / 60 < CONTINUE_SESSION_MINUTES:
@@ -282,5 +336,36 @@ class RecordUploadManager:
                 new_video = Video(update_json)
                 await current_session.add_video(new_video)
             elif update_json["EventType"] == "SessionEnded":
+                self.live_rooms.discard(room_id)
                 current_session.upload_task = \
                     asyncio.run_coroutine_threadsafe(self.upload_video(current_session), self.video_processing_loop)
+
+    def replay_session(self, flv_paths: [str]) -> str:
+        """
+        Re-runs processing and upload for recordings whose original session was lost or failed,
+        e.g. an upload that ran out of retries. flv_paths are relative to /storage, in recording order.
+        Name, title and start time come from the recorder's danmaku XML of the first file.
+        """
+        with open(flv_paths[0].rpartition('.')[0] + ".xml", 'r', encoding='utf-8-sig') as file:
+            header = file.read(4096)
+        info = dict(re.findall(r'(\w+)="([^"]*)"', re.search(r'<BililiveRecorderRecordInfo[^>]*>', header).group(0)))
+        room_id = int(info["roomid"])
+        room_config = next((room for room in self.config.rooms if room.id == room_id), None)
+        if room_config is None:
+            raise ValueError(f"Cannot find room config for {room_id}!")
+        session_id = f"replay-{uuid.uuid4()}"
+        event_data = {"SessionId": session_id, "RoomId": room_id, "Name": info["name"], "Title": info["title"]}
+        session = Session({"EventType": "SessionStarted", "EventTimestamp": info["start_time"], "EventData": event_data},
+                          room_config=room_config)
+        session.end_time = session.start_time
+        self.sessions[session_id] = session
+
+        async def replay():
+            for flv_path in flv_paths:
+                await session.add_video(Video({"EventData": {
+                    **event_data, "RelativePath": flv_path, "Duration": 0.0}}))
+            await self.upload_video(session)
+
+        session.upload_task = asyncio.run_coroutine_threadsafe(replay(), self.video_processing_loop)
+        print(f"replaying {room_id} {info['start_time']} as {session_id}: {flv_paths}")
+        return session_id

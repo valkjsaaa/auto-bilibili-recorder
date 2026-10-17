@@ -14,11 +14,12 @@ def spawn_recorder(room: RecoderRoom):
             print(f"invalid cookie for {room.id}, connect to websocket without cookie.")
         else:
             cookie_command = "--cookie \"" + "; ".join([f"{k}={v}" for k, v in cookie_dict.items()]) + "\" "
-            print(f"recorder for {room.id} with cookie: {cookie_command}")
+            print(f"recorder for {room.id} with cookie of {recorder_obj.key}")
     else:
         print(f"no recorder for {room.id}, connect to websocket without cookie.")
+    # exec so that terminate() reaches the recorder instead of only the wrapping shell
     spawn_command = \
-        f"{BINARY_PATH}BililiveRecorder/BililiveRecorder.Cli " \
+        f"exec {BINARY_PATH}BililiveRecorder/BililiveRecorder.Cli " \
         f"portable " \
         f"-d 63 " \
         f"--webhook-url " \
@@ -29,8 +30,17 @@ def spawn_recorder(room: RecoderRoom):
         f'{cookie_command}' \
         f'/storage/ ' \
         f'{room.id} '
-    print(f"spawn recorder for {room.id}: {spawn_command}")
+    print(f"spawn recorder for {room.id}")
     return subprocess.Popen(spawn_command, shell=True)
+
+
+def stop_recorder(process: subprocess.Popen):
+    process.terminate()
+    try:
+        process.wait(timeout=30)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=10)
 
 
 class RecorderManager:
@@ -47,10 +57,15 @@ class RecorderManager:
             for room in to_new_rooms:
                 self.recorder_dict[room] = spawn_recorder(room)
             for room in to_del_rooms:
-                self.recorder_dict[room].terminate()
-                self.recorder_dict[room].wait(timeout=10)
+                stop_recorder(self.recorder_dict[room])
                 del self.recorder_dict[room]
         return to_new_rooms, to_del_rooms
+
+    def restart_room(self, room):
+        """Respawns a recorder, e.g. to pick up refreshed cookies."""
+        print(f"restarting recorder for {room.id}")
+        stop_recorder(self.recorder_dict[room])
+        self.recorder_dict[room] = spawn_recorder(room)
 
 
 if __name__ == '__main__':
