@@ -35,6 +35,23 @@ ${录制目标文件夹}
  `-- recorder_config.yaml
 ```
 
+Cookie 自动续期：
+B站的 SESSDATA 大约半年过期，过期后上传会返回 403，弹幕服务器也会不停断开。
+给账号配置 `ac_time_value` 之后，脚本每 6 小时检查一次，在 B站要求刷新或离过期不到 30 天时自动刷新 cookie，
+新的 cookie 保存在配置文件旁边的 `account_credentials.yaml` 里（不会改动 `recorder_config.yaml`），并在主播不在直播时重启对应的录播姬。
+在 `recorder_config.yaml` 里换上新的 SESSDATA 后，以配置文件为准。
+
+获取 `ac_time_value` 的两种方法：
+* 推荐：在容器里扫码登录，会直接写入配置文件：`docker exec -it <容器> /webhook/venv/bin/python /webhook/login_qrcode.py --write <账号 ID>`，然后重启容器。
+* 浏览器登录后，在 bilibili.com 的开发者工具控制台运行 `localStorage.ac_time_value`。之后不要在这个浏览器里退出或继续使用这个账号，否则浏览器和脚本会互相把对方的登录顶掉。
+
+重新处理和上传：
+上传失败（比如 cookie 过期）的录播可以重新处理并上传，路径相对于录制目标文件夹，按录制顺序排列：
+```
+docker exec <容器> curl -s -X POST localhost:10261/reprocess -H 'Content-Type: application/json' \
+  -d '{"flv_paths": ["128308/20261015/128308-20261015-115616-200.flv"]}'
+```
+
 模版使用（视频标题和描述可以使用）：
 配置文件中的视频标题和描述可以使用[模版语言](https://docs.python.org/3/library/string.html#template-strings) 。包含以下模版：
 * `$name`：主播名字
